@@ -63,7 +63,7 @@ export function nextStep(
     .toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 
   if (c.state === CommitmentState.Submitted) {
-    if (isApprover) return 'Ready for your review — approve or reject the delivery.'
+    if (isApprover) return 'Ready for your review: approve or reject the delivery.'
     return `Submitted. Waiting for ${shortAddr(c.approver)} to review.`
   }
 
@@ -75,7 +75,7 @@ export function nextStep(
     return 'Waiting for all child commitments to settle before submitting.'
   }
   if (isManager) {
-    return `Ready to submit delivery — deadline ${dlStr}.`
+    return `Ready to submit delivery. Deadline: ${dlStr}.`
   }
   return `Waiting for ${shortAddr(c.manager)} to submit by ${dlStr}.`
 }

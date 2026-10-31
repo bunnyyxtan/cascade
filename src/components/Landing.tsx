@@ -367,7 +367,7 @@ function MandateCard() {
 ══════════════════════════════════════════════════════════════════════════════ */
 const PROCESS = [
   {
-    n: '01 — DEFINE', title: 'Fund with intention.',
+    n: '01: DEFINE', title: 'Fund with intention.',
     body: 'The client chooses the outcome, assigns a manager, and locks in the spending authority before work starts.',
     icon: (
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#D9FA71" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -377,7 +377,7 @@ const PROCESS = [
     ),
   },
   {
-    n: '02 — DELEGATE', title: 'Build the work tree.',
+    n: '02: DELEGATE', title: 'Build the work tree.',
     body: 'Managers divide authorized funds into new commitments. Each child has its own owner, approver, and deadline.',
     icon: (
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#D9FA71" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -386,7 +386,7 @@ const PROCESS = [
     ),
   },
   {
-    n: '03 — SETTLE', title: 'Approve. Return. Pay.',
+    n: '03: SETTLE', title: 'Approve. Return. Pay.',
     body: 'Approved work creates a claim. Failed work returns unspent capital. The original mandate stays intact.',
     icon: (
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#D9FA71" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">

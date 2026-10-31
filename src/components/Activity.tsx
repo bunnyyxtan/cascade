@@ -120,7 +120,7 @@ function rowContent(ev: ActivityEvent, onNavigate?: (view: string, id?: bigint) 
     case 'RootCreated': {
       const id = bn(a.id); const title = str(a.title); const client = str(a.client)
       return {
-        sentence: <><strong>{link(id)}</strong> funded{title ? ` — ${title}` : ''}</>,
+        sentence: <><strong>{link(id)}</strong> funded{title ? `: ${title}` : ''}</>,
         actor: client || undefined, amount: bn(a.budget), amountSign: 'escrowed',
       }
     }
@@ -141,7 +141,7 @@ function rowContent(ev: ActivityEvent, onNavigate?: (view: string, id?: bigint) 
     case 'CommitmentApproved': {
       const id = bn(a.id); const released = bn(a.released); const to = str(a.manager)
       return {
-        sentence: <><strong>{link(id)}</strong> approved — released to {
+        sentence: <><strong>{link(id)}</strong> approved, released to {
           to ? <span className="mono">{shortAddr(to)}</span> : 'manager'
         }</>,
         actor: str(a.approver) || undefined, amount: released, amountSign: '+',

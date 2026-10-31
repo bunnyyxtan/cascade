@@ -2,12 +2,16 @@
  * Cascade event history store — module singleton, useSyncExternalStore.
  *
  * - Fetches all events from VITE_CASCADE_DEPLOY_BLOCK (or head-10000)
- *   in ascending 9,000-block chunks, ≤4 in flight at a time.
+ *   in ascending 1,000-block chunks (Arc public RPC safe batch size).
+ * - Sequential processing: one chunk at a time, with 150ms inter-chunk
+ *   pacing to avoid overwhelming the shared public endpoint.
+ * - Exponential backoff with jitter on errors; detects 429 / rate-limit
+ *   responses and respects Retry-After when present.
  * - Caches to localStorage as { lastBlock, events } (bigints as decimal strings).
  * - On mount: loads cache immediately, then fetches from lastBlock+1 to head.
- * - Polls head every 15s while tab is visible.
+ * - Polls head every 30s while tab is visible (reduced from 15s).
  * - Exposes eventsFor(id), claimsFor(address), and progress (0–1).
- * - On chunk error: retries twice (200ms, 800ms backoff), then surfaces error.
+ * - Guards against overlapping sync runs (_syncing flag).
  */
 
 import { createPublicClient, http, parseEventLogs } from 'viem'
@@ -47,9 +51,28 @@ function toStr(v: Primitive): string { return v == null ? '' : String(v) }
 // ── localStorage cache ────────────────────────────────────────────────────────
 
 const CACHE_KEY = `cascade:history:${NET_CHAIN_ID}:${CASCADE_ADDRESS?.toLowerCase() ?? 'none'}`
-const CHUNK_SIZE = 9_000n
-const MAX_INFLIGHT = 4
-const POLL_INTERVAL = 15_000
+
+/**
+ * Arc docs recommend 1,000-block batches for eth_getLogs.
+ * Arc runs sub-second blocks — 1,000 blocks ≈ a few minutes of chain time.
+ * 9,000-block chunks were causing rate-limit errors on the public endpoint.
+ */
+const CHUNK_SIZE = 1_000n
+
+/**
+ * Sequential processing: one chunk at a time.
+ * Concurrent requests to the public Arc RPC endpoint cause rate-limit errors.
+ */
+const MAX_INFLIGHT = 1
+
+/** Checkpoint every N sequential chunks so a failure resumes nearby. */
+const CHECKPOINT_EVERY = 10
+
+/** Milliseconds to wait between consecutive chunk requests (pacing). */
+const INTER_CHUNK_DELAY = 150
+
+/** Polling interval in ms — reduced from 15s to 30s to lower background load. */
+const POLL_INTERVAL = 30_000
 
 type CacheEntry = {
   lastBlock: string
@@ -101,32 +124,63 @@ function loadCache(): { lastBlock: bigint; events: HistoryEvent[] } | null {
   } catch { return null }
 }
 
-// ── Fetch a single chunk with retry ──────────────────────────────────────────
+// ── Rate-limit detection ──────────────────────────────────────────────────────
+
+/**
+ * Returns the Retry-After delay in ms if the error looks like a 429 / rate-limit.
+ * Checks HTTP status codes embedded in viem error messages and error bodies.
+ */
+function rateLimitDelay(err: unknown): number | null {
+  if (!(err instanceof Error)) return null
+  const msg = err.message.toLowerCase()
+  // Direct 429 or rate-limit keywords
+  if (!msg.includes('429') && !msg.includes('rate') && !msg.includes('limit') && !msg.includes('too many')) return null
+  // Try to extract Retry-After from the message (some RPCs embed it)
+  const retryAfterMatch = /retry.?after[:\s]+(\d+)/i.exec(err.message)
+  if (retryAfterMatch) return parseInt(retryAfterMatch[1], 10) * 1000
+  return 5_000 // default 5s back-off on rate-limit
+}
+
+/** Clamp a value between min and max. */
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value))
+}
+
+/** Exponential back-off with jitter: baseMs * 2^attempt + random(0, jitterMs). */
+function backoffMs(attempt: number, baseMs = 1_000, maxMs = 30_000, jitterMs = 500): number {
+  const exp = clamp(baseMs * Math.pow(2, attempt), baseMs, maxMs)
+  return exp + Math.random() * jitterMs
+}
+
+// ── Fetch a single chunk with retry + rate-limit awareness ───────────────────
 
 async function fetchChunk(from: bigint, to: bigint): Promise<HistoryEvent[]> {
   const client = getClient()
   const addr = CASCADE_ADDRESS as `0x${string}`
 
-  async function attempt(): Promise<HistoryEvent[]> {
-    const raw = await client.getLogs({ address: addr, fromBlock: from, toBlock: to })
-    const decoded = parseEventLogs({ abi: cascadeAbi, logs: raw })
-    return decoded.map(log => ({
-      eventName: log.eventName,
-      args: (log.args as Record<string, unknown>) ?? {},
-      blockNumber: log.blockNumber ?? 0n,
-      transactionHash: log.transactionHash ?? null,
-      logIndex: log.logIndex ?? 0,
-    }))
-  }
+  const MAX_ATTEMPTS = 4
 
-  for (let attempt_ = 0; attempt_ < 3; attempt_++) {
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     try {
-      return await attempt()
+      const raw = await client.getLogs({ address: addr, fromBlock: from, toBlock: to })
+      const decoded = parseEventLogs({ abi: cascadeAbi, logs: raw })
+      return decoded.map(log => ({
+        eventName: log.eventName,
+        args: (log.args as Record<string, unknown>) ?? {},
+        blockNumber: log.blockNumber ?? 0n,
+        transactionHash: log.transactionHash ?? null,
+        logIndex: log.logIndex ?? 0,
+      }))
     } catch (e) {
-      if (attempt_ < 2) {
-        await new Promise(r => setTimeout(r, attempt_ === 0 ? 200 : 800))
+      if (attempt >= MAX_ATTEMPTS - 1) throw e
+
+      // Check for rate-limit first — use its suggested delay if available
+      const rlDelay = rateLimitDelay(e)
+      if (rlDelay !== null) {
+        await new Promise(r => setTimeout(r, rlDelay))
       } else {
-        throw e
+        // Exponential back-off for other transient errors
+        await new Promise(r => setTimeout(r, backoffMs(attempt)))
       }
     }
   }
@@ -159,7 +213,19 @@ function setState(patch: Partial<HistoryState>) {
   notify()
 }
 
-// ── Core sync ─────────────────────────────────────────────────────────────────
+// ── Dedup helper ──────────────────────────────────────────────────────────────
+
+function dedup(events: HistoryEvent[]): HistoryEvent[] {
+  const seen = new Set<string>()
+  return events.filter(e => {
+    const key = `${e.transactionHash ?? 'null'}-${e.logIndex}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
+
+// ── Core sync — sequential with pacing ───────────────────────────────────────
 
 async function syncFrom(fromBlock: bigint, head: bigint): Promise<void> {
   if (fromBlock > head) {
@@ -170,34 +236,36 @@ async function syncFrom(fromBlock: bigint, head: bigint): Promise<void> {
   // Build all chunk ranges
   const ranges: Array<{ from: bigint; to: bigint }> = []
   for (let start = fromBlock; start <= head; start += CHUNK_SIZE) {
-    ranges.push({ from: start, to: start + CHUNK_SIZE - 1n < head ? start + CHUNK_SIZE - 1n : head })
+    const end = start + CHUNK_SIZE - 1n < head ? start + CHUNK_SIZE - 1n : head
+    ranges.push({ from: start, to: end })
   }
 
   const total = ranges.length
   let done = 0
   const newEvents: HistoryEvent[] = []
 
-  // Process in batches of MAX_INFLIGHT; checkpoint after every batch
   for (let i = 0; i < ranges.length; i += MAX_INFLIGHT) {
     const batch = ranges.slice(i, i + MAX_INFLIGHT)
     const results = await Promise.all(batch.map(r => fetchChunk(r.from, r.to)))
     for (const chunk of results) newEvents.push(...chunk)
     done += batch.length
 
-    // Checkpoint: merge + save after each batch so a later failure
-    // resumes from the last saved syncedTo rather than deploy block
-    const checkpointBlock = ranges[i + batch.length - 1].to
-    const mergedSoFar = [..._state.events, ...newEvents]
-    const seenSoFar = new Set<string>()
-    const dedupedSoFar = mergedSoFar.filter(e => {
-      const key = `${e.transactionHash ?? 'null'}-${e.logIndex}`
-      if (seenSoFar.has(key)) return false
-      seenSoFar.add(key)
-      return true
-    })
-    dedupedSoFar.sort((a, b) => Number(b.blockNumber - a.blockNumber) || b.logIndex - a.logIndex)
-    saveCache(checkpointBlock, dedupedSoFar)
-    setState({ events: dedupedSoFar, progress: done / total, syncing: true, syncedTo: checkpointBlock })
+    // Checkpoint periodically so a failure resumes near where it stopped
+    const shouldCheckpoint = done % CHECKPOINT_EVERY === 0 || done === total
+    if (shouldCheckpoint) {
+      const checkpointBlock = ranges[i + batch.length - 1].to
+      const merged = dedup([..._state.events, ...newEvents])
+      merged.sort((a, b) => Number(b.blockNumber - a.blockNumber) || b.logIndex - a.logIndex)
+      saveCache(checkpointBlock, merged)
+      setState({ events: merged, progress: done / total, syncing: true, syncedTo: checkpointBlock })
+    } else {
+      setState({ progress: done / total, syncing: true })
+    }
+
+    // Inter-chunk pacing — avoid flooding the public RPC
+    if (i + MAX_INFLIGHT < ranges.length) {
+      await new Promise(r => setTimeout(r, INTER_CHUNK_DELAY))
+    }
   }
 
   // Final state after all batches
@@ -228,7 +296,19 @@ export async function syncHistory(force = false): Promise<void> {
     setState({ syncing: true, error: null })
     await syncFrom(fromBlock, head)
   } catch (e) {
-    setState({ syncing: false, error: e instanceof Error ? e.message : String(e) })
+    // Extract a clean human-readable message — never dump raw RPC JSON
+    let msg = 'Arc Testnet is temporarily unavailable. Please retry shortly.'
+    if (e instanceof Error) {
+      const raw = e.message
+      // Rate-limit specific message
+      if (raw.toLowerCase().includes('429') || raw.toLowerCase().includes('rate') || raw.toLowerCase().includes('too many')) {
+        msg = 'Arc Testnet is busy right now. Please wait a moment and retry.'
+      } else if (raw.length < 200) {
+        // Only use the raw message if it is short enough to be readable
+        msg = raw
+      }
+    }
+    setState({ syncing: false, error: msg })
   } finally {
     _syncing = false
     schedulePoll()
