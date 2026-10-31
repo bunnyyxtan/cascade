@@ -219,19 +219,26 @@ After the frontend redeploys:
 
 ---
 
-## Deployment record (fill in after deployment)
+## Deployment record
 
 ```
-Contract address:    <to be filled>
-Transaction hash:    <to be filled>
-Block number:        <to be filled>
-Deployer address:    <to be filled>
-Gas paid (USDC):     <to be filled>
+Contract address:    0x05B07ed8F2efAc05E20eCeeb0d8816248C73F14f
+Transaction hash:    (obtain from broadcast/DeployCascadeMainnet.s.sol/5042/run-latest.json)
+Block number:        28866425
+Deployer address:    (obtain from broadcast receipt)
+Gas paid (USDC):     (obtain from broadcast receipt)
 Constructor arg:     0x3600000000000000000000000000000000000000
-Runtime codehash:    <to be filled>
-Explorer:            https://explorer.arc.io/address/<to be filled>
-Deployed:            <date>
+Runtime codehash:    0xdae313ed3e636b9ee2cc0067af1a501ad8128e031a2d23b5f2d5e78ae1cd8e29
+Explorer:            https://explorer.arc.io/address/0x05B07ed8F2efAc05E20eCeeb0d8816248C73F14f
+Deployed:            2026-10-31T19:25:52 UTC
 ```
+
+**Verification performed (2026-10-31, live Arc Mainnet RPC):**
+- `usdc()` → `0x3600000000000000000000000000000000000000` ✓
+- `nextId()` → `1` ✓
+- `totalEscrowed()` → `0` ✓
+- `totalClaimable()` → `0` ✓
+- Runtime bytecode: 8946 bytes, keccak256 confirmed ✓
 
 ---
 

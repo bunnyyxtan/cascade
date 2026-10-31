@@ -13,14 +13,14 @@ flowing to claimable balances on success and returning to the parent on failure.
 | Network | Chain ID | Address | Deploy block |
 |---------|----------|---------|--------------|
 | Arc Testnet | 5042002 | `0xa87371b1127d88df309313ddcaa43b6191fa9a57` | 69,056,151 |
-| Arc Mainnet | 5042 | _pending deployment_ | _pending_ |
+| Arc Mainnet | 5042 | `0x05B07ed8F2efAc05E20eCeeb0d8816248C73F14f` | 28,866,425 |
 
 **Testnet** deploy tx: [`0x0e07…2a6a`](https://explorer.testnet.arc.io/tx/0x0e07a498c287e26481ea5150968741dea3210e2ad1c0a552bcd15f508fa82a6a)
 Testnet runtime codehash (keccak256): `0xdae313ed3e636b9ee2cc0067af1a501ad8128e031a2d23b5f2d5e78ae1cd8e29`
 
-**Mainnet deployment:** Run `contracts/script/DeployCascadeMainnet.s.sol` from your own machine.
-See `docs/deployment-mainnet.md` for the complete step-by-step guide.
-After deployment, update this table and the Vercel environment variables.
+**Mainnet** deploy block: 28,866,425 (2026-10-31T19:25:52 UTC)
+Mainnet runtime codehash (keccak256, verified live): `0xdae313ed3e636b9ee2cc0067af1a501ad8128e031a2d23b5f2d5e78ae1cd8e29`
+Mainnet explorer: https://explorer.arc.io/address/0x05B07ed8F2efAc05E20eCeeb0d8816248C73F14f
 
 USDC on Arc (testnet and mainnet): `0x3600000000000000000000000000000000000000` (6 decimals)
 
