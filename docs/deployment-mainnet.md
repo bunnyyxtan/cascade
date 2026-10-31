@@ -223,17 +223,25 @@ After the frontend redeploys:
 
 ```
 Contract address:    0x05B07ed8F2efAc05E20eCeeb0d8816248C73F14f
-Transaction hash:    (obtain from broadcast/DeployCascadeMainnet.s.sol/5042/run-latest.json)
+Transaction hash:    0xc6cb7ec3a2d6727da67e991da22790b7df77a154a83ad4ddaf008cc7ff945c21
 Block number:        28866425
-Deployer address:    (obtain from broadcast receipt)
-Gas paid (USDC):     (obtain from broadcast receipt)
+Deployer address:    0xf08043221338c621b6f2f387af70b33797629371
+Gas paid (USDC):     0.05237913075 USDC (2,034,141 gas at 25.75 gwei)
 Constructor arg:     0x3600000000000000000000000000000000000000
 Runtime codehash:    0xdae313ed3e636b9ee2cc0067af1a501ad8128e031a2d23b5f2d5e78ae1cd8e29
-Explorer:            https://explorer.arc.io/address/0x05B07ed8F2efAc05E20eCeeb0d8816248C73F14f
 Deployed:            2026-10-31T19:25:52 UTC
 ```
 
+Explorer links:
+- Contract: https://explorer.arc.io/address/0x05B07ed8F2efAc05E20eCeeb0d8816248C73F14f
+- Deploy tx: https://explorer.arc.io/tx/0xc6cb7ec3a2d6727da67e991da22790b7df77a154a83ad4ddaf008cc7ff945c21
+
 **Verification performed (2026-10-31, live Arc Mainnet RPC):**
+- Transaction status: `0x1` (success) ✓
+- `from` matches deployer address ✓
+- `contractAddress` matches contract address ✓
+- `blockNumber` matches deploy block ✓
+- `gasUsed`: 2,034,141 ✓
 - `usdc()` → `0x3600000000000000000000000000000000000000` ✓
 - `nextId()` → `1` ✓
 - `totalEscrowed()` → `0` ✓
