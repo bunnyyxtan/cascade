@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Allow: /docs
+Allow: /docs/
+Allow: /security
+Allow: /faq
+Allow: /support
+Allow: /usage-risks
+
+# /privacy is unpublished (hosting provider not yet verified)
+Disallow: /privacy
+
+Sitemap: /sitemap.xml

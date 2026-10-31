@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <!--
+    Cascade favicon mark — optically simplified for 16–32px sizes.
+    Preserves trunk + 3 branches (inner-left, inner-right, center-top) + root lime.
+    Outer branches omitted at this size; identity preserved by the core silhouette.
+  -->
+
+  <!-- Background square — #1A1D18 fill for favicon readability on browser chrome -->
+  <rect width="32" height="32" rx="7" fill="#1A1D18"/>
+
+  <g stroke="#F8F8F5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <!-- Trunk -->
+    <line x1="16" y1="28" x2="16" y2="10" stroke-width="2.4"/>
+    <!-- Inner-left branch -->
+    <path stroke-width="2" d="M 16 19 C 12 17, 9 14, 8 10"/>
+    <!-- Inner-right branch -->
+    <path stroke-width="2" d="M 16 17 C 20 15, 22 12, 24 9"/>
+  </g>
+
+  <!-- Top node -->
+  <circle cx="16" cy="7.5" r="3.5" fill="#F8F8F5"/>
+  <!-- Inner-left node -->
+  <circle cx="7.5" cy="8.5" r="3" fill="#F8F8F5"/>
+  <!-- Inner-right node -->
+  <circle cx="24.5" cy="7.5" r="3" fill="#F8F8F5"/>
+
+  <!-- Root outer ring + lime fill -->
+  <circle cx="16" cy="29" r="4" fill="#1A1D18" stroke="#F8F8F5" stroke-width="1.5"/>
+  <circle cx="16" cy="29" r="2.2" fill="#72F53A"/>
+</svg>

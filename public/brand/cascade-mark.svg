@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500">
+  <!--
+    Cascade brand mark — exact SVG reconstruction of the approved logo.
+    Colours: near-black #222520, lime #7AED3C, background #F4F3EE (omit for transparent use).
+    All geometry derived directly from the approved logo file.
+  -->
+
+  <!-- Background (include for favicon/OG; remove for transparent-bg use) -->
+  <rect width="500" height="500" fill="#F4F3EE"/>
+
+  <!--
+    The mark sits roughly in the region x: 90–410, y: 80–430 of the 500×500 canvas.
+    Centre X = 250. The root circle sits at y ≈ 390.
+    The top node sits at y ≈ 100.
+
+    Branch geometry (stroke approach — round caps give the tubular appearance):
+      stroke-width 28 for outer branches, 24 for inner branches, 20 for trunk/stem.
+  -->
+
+  <g fill="none" stroke="#222520" stroke-linecap="round" stroke-linejoin="round">
+
+    <!-- ── Trunk: root circle top → inner branch split point ──────────────── -->
+    <line x1="250" y1="360" x2="250" y2="260" stroke-width="22"/>
+
+    <!-- ── Stem: inner split → top node ──────────────────────────────────── -->
+    <line x1="250" y1="260" x2="250" y2="118" stroke-width="20"/>
+
+    <!-- ── Inner-left branch: splits off trunk at y≈265, goes to node ──── -->
+    <!-- Curve: starts at (250,265), sweeps left-up to node at (168,200) -->
+    <path d="M 250 268 C 228 255, 200 230, 168 200" stroke-width="19"/>
+
+    <!-- ── Inner-right branch: mirrors inner-left ──────────────────────── -->
+    <path d="M 250 260 C 272 247, 300 222, 330 196" stroke-width="19"/>
+
+    <!-- ── Outer-left branch: starts lower on trunk, S-curves wide-left ──
+         Key feature: dips slightly downward before sweeping out (S-curve).
+         Starts at (245,310), dips to (220,340), then sweeps to (108,312) -->
+    <path d="M 248 325 C 230 338, 200 345, 175 340 C 152 335, 120 325, 106 315" stroke-width="22"/>
+
+    <!-- ── Outer-right branch: mirrors outer-left ──────────────────────── -->
+    <path d="M 252 318 C 270 332, 300 340, 328 337 C 352 332, 378 322, 390 312" stroke-width="22"/>
+
+  </g>
+
+  <!-- ── Terminal nodes (five dark filled circles) ─────────────────────────── -->
+  <!-- Top node -->
+  <circle cx="250" cy="100" r="42" fill="#222520"/>
+  <!-- Inner-left node -->
+  <circle cx="155" cy="185" r="36" fill="#222520"/>
+  <!-- Inner-right node -->
+  <circle cx="340" cy="180" r="36" fill="#222520"/>
+  <!-- Outer-left node -->
+  <circle cx=" 88" cy="308" r="38" fill="#222520"/>
+  <!-- Outer-right node -->
+  <circle cx="408" cy="305" r="38" fill="#222520"/>
+
+  <!-- ── Root node: large dark ring with lime fill ──────────────────────────── -->
+  <circle cx="250" cy="398" r="46" fill="#222520"/>
+  <circle cx="250" cy="398" r="28" fill="#7AED3C"/>
+
+</svg>

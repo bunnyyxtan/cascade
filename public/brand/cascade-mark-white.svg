@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 250" fill="none">
+  <!--
+    Cascade brand mark — white/inverted variant for dark backgrounds.
+    Identical geometry to cascade-mark.svg; branches and nodes use #FFFFFF.
+    Lime root is preserved as-is (reads well on dark).
+  -->
+
+  <g stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <line x1="100" y1="194" x2="100" y2="164" stroke-width="15"/>
+    <line x1="100" y1="164" x2="100" y2="110" stroke-width="14"/>
+    <path stroke-width="13" d="M 100 110 L 100 38"/>
+    <path stroke-width="12" d="M 100 118 C 88 110, 72 88, 60 66 C 56 56, 54 52, 54 50"/>
+    <path stroke-width="12" d="M 100 108 C 112 100, 128 80, 138 62 C 144 52, 146 48, 146 44"/>
+    <path stroke-width="13" d="M 98 168 C 82 164, 58 150, 36 132 C 22 120, 14 112, 14 112"/>
+    <path stroke-width="13" d="M 102 168 C 118 164, 142 150, 164 132 C 178 120, 186 112, 186 112"/>
+  </g>
+
+  <g fill="#FFFFFF">
+    <circle cx="100" cy="22"  r="22"/>
+    <circle cx=" 54" cy="52"  r="20"/>
+    <circle cx="146" cy="46"  r="20"/>
+    <circle cx=" 14" cy="112" r="20"/>
+    <circle cx="186" cy="112" r="20"/>
+    <circle cx="100" cy="216" r="24"/>
+  </g>
+
+  <circle cx="100" cy="216" r="15" fill="#72F53A"/>
+</svg>

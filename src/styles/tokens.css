@@ -1,0 +1,145 @@
+/**
+ * Design tokens — Cascade "Ledger" direction.
+ * Import this before Tailwind directives so variables are available globally.
+ */
+
+:root {
+  /* ── Type scale ─────────────────────────────────────────────────────────── */
+  /* Shorthand font: tokens (size/line-height) */
+  --text-xs:   0.75rem / 1rem;       /* 12/16 — meta only */
+  --text-sm:   0.875rem / 1.4286rem; /* 14/20 */
+  --text-md:   1rem / 1.5rem;        /* 16/24 — body */
+  --text-lg:   1.25rem / 1.75rem;    /* 20/28 */
+  --text-xl:   1.5rem / 2rem;        /* 24/32 */
+  --text-2xl:  2rem / 2.5rem;        /* 32/40 */
+  --text-3xl:  2.5rem / 3rem;        /* 40/48 */
+
+  /* font-size only — use these in rules that set size but not line-height */
+  --fs-xs:   0.75rem;   /* 12px — meta, kicker, mono labels */
+  --fs-sm:   0.875rem;  /* 14px — body-sm, form labels, help */
+  --fs-md:   1rem;      /* 16px — body */
+  --fs-lg:   1.125rem;  /* 18px */
+  --fs-xl:   1.25rem;   /* 20px */
+  --fs-2xl:  1.5rem;    /* 24px */
+  --fs-3xl:  2rem;      /* 32px */
+  --fs-4xl:  2.5rem;    /* 40px */
+  --fs-title: 1.0625rem; /* 17px — page title-sm */
+  --fs-head:  1.1875rem; /* 19px */
+  --fs-13:    0.8125rem; /* 13px — compact body, meta, section labels */
+  --fs-15:    0.9375rem; /* 15px — near-body */
+
+  /* Numeric / money — tabular, tight tracking */
+  --num-md:    1.25rem;  /* 20px */
+  --num-lg:    1.75rem;  /* 28px */
+  --num-xl:    2.5rem;   /* 40px */
+  --num-2xl:   3.5rem;   /* 56px */
+
+  /* ── Weights ─────────────────────────────────────────────────────────────── */
+  --w-body:    450;
+  --w-label:   600;
+  --w-heading: 650;
+
+  /* ── Colour ──────────────────────────────────────────────────────────────── */
+  /* Text */
+  --ink:       #151714;
+  --text-2:    #4A5245;
+  --text-3:    #5F675A;  /* lowest allowed */
+
+  /* Surfaces */
+  --paper:     #F8F8F5;
+  --surface:   #FFFFFF;
+  --line:      #E3E6DD;
+  --line-strong: #CFD5C6;
+  --lime:      #D9FA71;
+  --dark:      #1B1F1A;
+
+  /* Status — bg / fg / dot */
+  --status-active-bg:     #F3FBD9;
+  --status-active-fg:     #151714;
+  --status-active-dot:    #8DB82C;
+
+  --status-submitted-bg:  #FDF3DF;
+  --status-submitted-fg:  #7A5A12;
+  --status-submitted-dot: #C49226;
+
+  --status-settled-bg:    #E6F3EA;
+  --status-settled-fg:    #1F6B43;
+  --status-settled-dot:   #2E9A5E;
+
+  --status-rejected-bg:   #FBE9E8;
+  --status-rejected-fg:   #A63D3A;
+  --status-rejected-dot:  #C75450;
+
+  --status-cancelled-bg:  #EEF0EC;
+  --status-cancelled-fg:  #4A5245;
+  --status-cancelled-dot: #8A9285;
+
+  --status-expired-bg:    #F4EDE4;
+  --status-expired-fg:    #7A5534;
+  --status-expired-dot:   #B07A4A;
+
+  /* Semantic aliases — keep old names working */
+  --white:        var(--surface);
+  --ink-2:        #252823;
+  --secondary:    var(--text-2);
+  --muted:        var(--text-3);
+  --line-dark:    #353933;
+  --lime-soft:    #E9F9B8;
+  --select:       #E4EDC9;
+  --tint:         #F0F2EC;
+  --ok:           #27744E;
+  --warn:         #966625;
+  --bad:          #B64D4A;
+  --bg:           var(--paper);
+  --border:       var(--line);
+  --border-mid:   #D0D4C8;
+  --border-strong: var(--line-strong);
+  --surface-muted: var(--tint);
+  --surface-dark: var(--dark);
+  --accent:       var(--lime);
+  --accent-ink:   var(--ink);
+  --success:      var(--ok);
+  --success-bg:   #EDFAF4;
+  --danger:       var(--bad);
+  --danger-bg:    #FEF2F2;
+  --warn-bg:      #FEF8EE;
+  --subtle:       var(--text-3);
+
+  /* ── Spacing ─────────────────────────────────────────────────────────────── */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-12: 48px;
+  --sp-16: 64px;
+
+  /* ── Radius ──────────────────────────────────────────────────────────────── */
+  --r-sm:  8px;
+  --r-md:  12px;
+  --r-lg:  16px;
+
+  /* ── Shadow (popovers and sticky panels only) ────────────────────────────── */
+  --shadow: 0 8px 32px rgba(18,23,14,.10), 0 2px 8px rgba(18,23,14,.06);
+
+  /* ── Typography ─────────────────────────────────────────────────────────── */
+  --font-sans: 'Hanken Grotesk', system-ui, sans-serif;
+  --font-mono: 'DM Mono', 'Menlo', monospace;
+
+  /* ── Motion ─────────────────────────────────────────────────────────────── */
+  --dur-fast: 150ms;
+  --dur-base: 250ms;
+  --dur-slow: 400ms;
+  --ease:     cubic-bezier(.22,1,.36,1);
+}
+
+/* Reduced-motion global override */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
