@@ -48,9 +48,11 @@ bun install
 ```bash
 forge build
 
-# Confirm the artifact exists and note the bytecode hash
-forge inspect Cascade bytecode | wc -c   # creation bytecode length
-forge inspect Cascade deployedBytecode | sha256sum   # artifact hash (pre-deploy)
+# Confirm the artifact exists and note the bytecode length
+forge inspect Cascade bytecode | wc -c   # creation bytecode length in hex chars
+
+# Compute keccak256 of the deployed (runtime) bytecode artifact — compare after deployment
+cast keccak $(forge inspect Cascade deployedBytecode)
 ```
 
 The artifact at `contracts/out/Cascade.sol/Cascade.json` must be built from
@@ -85,8 +87,14 @@ cast balance $(cast wallet address --private-key $PRIVATE_KEY) \
   --rpc-url $RPC_URL
 ```
 
-The balance is in native units (18 decimals). Divide by 1e12 to get the USDC-equivalent (6 decimal) amount.
-A deployment typically costs well under 0.01 USDC in gas.
+The balance returned by `cast balance` is in native Arc units (18 decimals). To convert to the
+familiar 6-decimal USDC amount, divide by 10^12. For example, a native balance of
+`5000000000000` (5 × 10^12) equals 5.000000 USDC.
+
+Gas costs vary with network conditions and cannot be stated precisely in advance.
+Run the dry-run in Step 4 and read the estimated gas from the simulation output
+before broadcasting. Contract deployment on Arc costs a modest amount of USDC;
+the dry-run will show the exact estimate for current conditions.
 
 ---
 
@@ -133,7 +141,7 @@ confirmation is nearly instant.
 
 ## Step 6: Record the deployment details
 
-From the script output and `broadcast/arc_mainnet/5042/run-latest.json`:
+From the script output and `broadcast/DeployCascadeMainnet.s.sol/5042/run-latest.json`:
 
 ```
 VITE_NETWORK=mainnet
@@ -141,13 +149,15 @@ VITE_CASCADE_ADDRESS=0x<deployed address>
 VITE_CASCADE_DEPLOY_BLOCK=<block number from receipt>
 ```
 
-Compute the runtime codehash:
+Compute the runtime codehash (keccak256 of the deployed bytecode — this is what
+`VITE_CASCADE_CODEHASH` and the frontend's fail-closed check both use):
 
 ```bash
-cast code 0x<deployed address> --rpc-url $RPC_URL | sha256sum
-# or
 cast keccak $(cast code 0x<deployed address> --rpc-url $RPC_URL)
 ```
+
+Cross-check: this value must match what you computed from the artifact in Step 1,
+confirming the onchain bytecode matches the local build.
 
 Record this as `VITE_CASCADE_CODEHASH`.
 
@@ -159,7 +169,7 @@ Record this as `VITE_CASCADE_CODEHASH`.
 # Check usdc() returns the correct address
 cast call 0x<deployed address> "usdc()(address)" --rpc-url $RPC_URL
 
-# Check nextId() is 0 (no testnet state)
+# Check nextId() is 1 (Cascade initializes _nextId = 1; first commitment gets id 1)
 cast call 0x<deployed address> "nextId()(uint256)" --rpc-url $RPC_URL
 
 # Check totalEscrowed is 0
@@ -169,8 +179,9 @@ cast call 0x<deployed address> "totalEscrowed()(uint256)" --rpc-url $RPC_URL
 cast call 0x<deployed address> "totalClaimable()(uint256)" --rpc-url $RPC_URL
 ```
 
-All four must match expected values. If `usdc()` returns anything other than
-`0x3600000000000000000000000000000000000000`, **do not proceed**.
+Expected values: `usdc()` = `0x3600000000000000000000000000000000000000`,
+`nextId()` = `1`, `totalEscrowed()` = `0`, `totalClaimable()` = `0`.
+If any value differs, **do not proceed**.
 
 ---
 
@@ -200,7 +211,7 @@ After the frontend redeploys:
 - [ ] Page title shows "Arc Mainnet" (not "Arc Testnet")
 - [ ] Contract codehash verification passes (green indicator)
 - [ ] USDC address shown matches `0x3600...`
-- [ ] `nextId` shows 0 (no testnet history imported)
+- [ ] `nextId` shows 1 (fresh deployment; no commitments yet)
 - [ ] Event history starts from the new deployment block
 - [ ] Wallet USDC balance reads correctly
 - [ ] Objective creation form targets the correct contract address

@@ -39,7 +39,7 @@ import {Cascade} from "../Cascade.sol";
  *
  *         5. Record the output:
  *            - Deployed contract address (logged as "Cascade deployed at")
- *            - Transaction hash (in broadcast/arc_mainnet/5042/run-latest.json)
+ *            - Transaction hash (in broadcast/DeployCascadeMainnet.s.sol/5042/run-latest.json)
  *            - Deployment block
  *
  *         SECURITY NOTES:
@@ -108,13 +108,15 @@ contract DeployCascadeMainnet is Script {
         );
         console.log("usdc() verification: PASS (", deployedUsdc, ")");
 
-        // Read nextId() — must be 0 on a fresh deployment
+        // Read nextId() — must be 1 on a fresh deployment.
+        // Cascade initializes _nextId = 1 so the first real commitment gets id 1.
+        // A value other than 1 indicates the deployment did not land on a clean state.
         (bool ok3, bytes memory data3) = cascade.staticcall(
             abi.encodeWithSignature("nextId()")
         );
         require(ok3 && data3.length == 32, "nextId() read failed");
         uint256 nextId = abi.decode(data3, (uint256));
-        require(nextId == 0, "nextId() must be 0 on fresh deployment");
+        require(nextId == 1, "nextId() must be 1 on fresh deployment");
         console.log("nextId() verification: PASS (", nextId, ")");
 
         console.log("");
