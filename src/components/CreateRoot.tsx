@@ -21,6 +21,7 @@ import { useUsdcBalance, useUsdcAllowance } from '@/hooks/useUsdcBalance'
 import { useSuccessOnce } from '@/hooks/useCascadeWrite'
 import { triggerRefetch } from '@/lib/history'
 import { IS_MAINNET, NETWORK_LABEL } from '@/lib/network'
+import { useConfigCheck, EXPECTED_CONFIG_KEY } from '@/lib/configCheck'
 import { useInvalidateCommitment, useInvalidateUsdcBalance } from '@/hooks/useInvalidate'
 import { formatUsdc, parseUsdc, isPast, relativeDeadline } from '@/lib/format'
 import { txUrl } from '@/lib/contracts'
@@ -215,6 +216,7 @@ interface SummaryProps {
   firstUnmetReason: string | null
   isConnected:      boolean
   isWrongChain:     boolean
+  configOk:         boolean
   reviewing:        boolean
   onReview:         () => void
   onCancelReview:   () => void
@@ -242,7 +244,7 @@ function EscrowSummary(p: SummaryProps) {
   const {
     parsedAmount, parsedDelegation, reservedBudget, balance, manager,
     deadlineTs, needsApproval, formValid, firstUnmetReason,
-    isConnected, isWrongChain, reviewing, onReview, onCancelReview, onConfirm,
+    isConnected, isWrongChain, configOk, reviewing, onReview, onCancelReview, onConfirm,
     approvePending, approveConfirming, approveSuccess, approveError, approveErr, approveHash, resetApprove,
     createPending, createConfirming, createSuccess, createErrored, createErr, createHash, resetCreate,
     touchAll,
@@ -306,8 +308,8 @@ function EscrowSummary(p: SummaryProps) {
         ))}
       </div>
 
-      {/* What you'll sign — only shown when connected on the right chain */}
-      {isConnected && !isWrongChain && (
+      {/* What you'll sign — only shown when connected, correct chain, and verified */}
+      {isConnected && !isWrongChain && configOk && (
         <div className="cr-summary-steps">
           <p className="cr-steps-heading">
             What you'll sign
@@ -336,9 +338,9 @@ function EscrowSummary(p: SummaryProps) {
 
       {/* Action area */}
       <div className="cr-summary-action">
-        {!isConnected || isWrongChain ? (
+        {!isConnected || isWrongChain || !configOk ? (
           <WalletGate isConnected={isConnected} isWrongChain={isWrongChain}>
-            {/* WalletGate renders the connect / switch prompt */}
+            {/* WalletGate renders the connect / switch / verify prompt */}
             <span />
           </WalletGate>
         ) : reviewing && reviewPara ? (
@@ -403,6 +405,10 @@ export function CreateRoot({ onNavigate }: Props) {
   // ── All state unchanged ─────────────────────────────────────────────────────
   const { address, isConnected, chainId } = useAccount()
   const wrongChain = isConnected && chainId !== TARGET_CHAIN_ID
+
+  // ── Contract verification — writes allowed only when status is ok + key matches
+  const configResult = useConfigCheck()
+  const configOk = configResult.status === 'ok' && configResult.key === EXPECTED_CONFIG_KEY
 
   const [manager,       setManager]       = useState('')
   const [amount,        setAmount]        = useState('')
@@ -515,9 +521,11 @@ export function CreateRoot({ onNavigate }: Props) {
     if (needsApproval) { handleApprove() } else { handleCreate() }
   }
 
-  /* Auto-advance: once approve succeeds and no create tx yet, run create */
+  /* Auto-advance: once approve succeeds and no create tx yet, run create.
+   * configOk is re-checked here in case verification status changed between
+   * the approve tx and the auto-advance callback. */
   useSuccessOnce(approveSuccess && !createHash, approveHash, () => {
-    if (formValid) handleCreate()
+    if (formValid && configOk) handleCreate()
   })
 
   /* IDs for aria-describedby */
@@ -773,6 +781,7 @@ export function CreateRoot({ onNavigate }: Props) {
               firstUnmetReason={firstUnmetReason}
               isConnected={isConnected}
               isWrongChain={wrongChain}
+              configOk={configOk}
               reviewing={reviewing}
               onReview={() => setReviewing(true)}
               onCancelReview={() => setReviewing(false)}
