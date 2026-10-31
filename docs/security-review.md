@@ -1,12 +1,13 @@
 # Cascade V1 — Security Review
 
 **Date:** 2026-10-31  
-**Reviewer:** Arc Studio (automated rule-corpus + functional-adversarial analysis + Slither static analysis)  
+**Reviewer:** Arc Studio (automated rule-corpus + functional-adversarial analysis + Slither static analysis + targeted adversarial Foundry tests)  
 **Contract:** `contracts/Cascade.sol`  
 **Compiler:** solc 0.8.28, cancun EVM, optimizer 200 runs  
 **Deployed at:** `0xa87371b1127d88df309313ddcaa43b6191fa9a57` (Arc Testnet, chain ID 5042002)  
 **On-chain codehash (keccak256):** `0xdae313ed3e636b9ee2cc0067af1a501ad8128e031a2d23b5f2d5e78ae1cd8e29`  
-**Bytecode match:** ✅ keccak256 of on-chain runtime code matches `VITE_CASCADE_CODEHASH` exactly
+**Bytecode match:** ✅ keccak256 of on-chain runtime code matches `VITE_CASCADE_CODEHASH` exactly  
+**Adversarial tests:** `contracts/test/CascadeAdversarial.t.sol` — 26 tests, all passing
 
 ---
 
@@ -22,11 +23,29 @@ This review covers the contract source and deployed bytecode against known vulne
 |---|---|
 | Critical | 0 |
 | High | 0 |
-| Medium | 3 |
-| Low | 3 |
+| Medium | 2 (M-03 downgraded to Low after adversarial testing) |
+| Low | 4 |
 | Informational / Gas | 4 |
 
-No fund-loss paths, re-entrancy vectors, permission bypasses, or accounting-invariant violations were identified. The design is conservative and correct for its stated scope.
+No fund-loss paths, re-entrancy vectors, permission bypasses, or accounting-invariant violations were identified. The design is conservative and correct for its stated scope. Targeted adversarial testing of all findings confirmed no exploitable vulnerabilities.
+
+---
+
+## Mainnet readiness decisions
+
+| Finding | Decision | Rationale |
+|---|---|---|
+| M-01 Constructor no chain/USDC guard | **Fix before mainnet** | One-time deployment risk; cheap to prevent with constructor assertions. See corrected recommendation below. |
+| M-02 Permissionless expire on Submitted | **Accept with documentation** | Tested: third party gains nothing; deadline is absolute by design; grace period would require new code and tests. NatSpec update sufficient. |
+| M-03 Deep-tree fund lock (downgraded to Low) | **Accept** | Adversarial testing proves all funds are always recoverable via bottom-up expire. Root deadline is the hard outer bound. No permanent lock is possible. |
+| 16-child slot not freed on failure | **Accept with documentation** | Designed behaviour. Managers must plan child counts. Funds are always recoverable via expire after deadline. |
+| L-01 Slither locked-ether | Accept | False positive. |
+| L-02 Slither timestamp | Accept for Arc | No meaningful manipulation on Arc's sequenced chain. |
+| L-03 approve skips children check | Accept | Safe by construction; submit already enforces it. |
+| I-01 cyclomatic complexity | Accept | Correctness over refactoring. |
+| I-02 ID-0 sentinel | Accept | Pattern is sound; comment improves clarity. |
+| I-03 No FundsReturned on root failure | Accept | Tested and documented. Callers can infer amount from the commitment's `remaining` at event time. |
+| I-04 Unbounded string storage | Accept for V1 | Gas cost borne by caller; no fund-loss vector. |
 
 ---
 
@@ -50,20 +69,28 @@ constructor(address usdcAddress) {
 
 **Impact:** One-time deployment risk. Irreversible if triggered. Does not affect the already-deployed testnet instance (USDC address is confirmed correct on-chain).
 
-**Recommended fix:**
+**Recommended fix (corrected — must cover both Arc Testnet and Arc Mainnet):**
+
+The original recommendation incorrectly hardcoded only `5042002` (Arc Testnet). A contract intended for Arc Mainnet (chain ID `5042`) would be permanently bricked by that check. The correct fix covers both:
+
 ```solidity
-// At top of contract or constructor
-uint256 private constant EXPECTED_CHAIN_ID = 5042002;
 address private constant ARC_USDC = 0x3600000000000000000000000000000000000000;
 
 constructor(address usdcAddress) {
     if (usdcAddress == address(0)) revert InvalidAddress();
-    require(block.chainid == EXPECTED_CHAIN_ID, "wrong chain");
-    require(usdcAddress == ARC_USDC, "wrong USDC");
+    // Accept Arc Testnet (5042002) and Arc Mainnet (5042) only.
+    require(
+        block.chainid == 5042002 || block.chainid == 5042,
+        "Cascade: wrong chain"
+    );
+    require(usdcAddress == ARC_USDC, "Cascade: wrong USDC");
     usdc = IERC20(usdcAddress);
 }
 ```
-If multi-chain deployments are planned, replace the hardcoded constants with immutable deployment parameters validated against a known-good registry, or document the deployment procedure and rely on bytecode-hash verification (as the frontend already does).
+
+**Effect on existing testnet deployment:** None — the existing deployment is immutable. This fix applies only to future redeployments. The frontend's codehash verification (`VITE_CASCADE_CODEHASH`) catches any bytecode mismatch on the deployed instance.
+
+**Alternative (portable):** Omit the chain-ID check and rely entirely on deployment tooling and bytecode verification. Accept that the constructor is then permissive and document the deployment procedure carefully.
 
 ---
 
@@ -83,7 +110,9 @@ function expire(uint256 id) external nonReentrant {
 
 **Risk:** By design, any address can call `expire` on any commitment once its deadline passes and its children are terminal. This is intentional for "permissionless bottom-up expiry chains." However, consider the following adversarial scenario: a manager has submitted work just before the deadline and the approver is reviewing it. An attacker monitoring the mempool calls `expire` immediately after the block timestamp passes the deadline, racing the approver's `approve` transaction. The submitted work is marked `Failed` instead of `Succeeded`, the funds return to the parent/client, and the manager loses their claimable payout.
 
-**Impact:** A submitted commitment can be expired by a third party in the same block the deadline passes, even if the approver is about to approve. This is a griefing vector with real financial consequence for managers. On a chain with fast block times (Arc has sub-second finality), the race window is tight but real.
+**Adversarial test result:** `test_M02_thirdParty_expires_submitted_at_deadline` confirms the scenario occurs. `test_M02_thirdParty_gains_nothing_from_expiring` confirms the third party receives zero USDC — all funds return to the client (the approver). `test_M02_cannotApprove_afterExpire` and `test_M02_cannotExpire_afterApprove` confirm double-settlement is impossible in both directions.
+
+**Impact:** A submitted commitment can be expired by a third party in the same block the deadline passes. The race window is exactly 1 block on Arc. Critically: the only party who receives the refunded funds is the *client*, who is also the *approver*. A hostile third party gains no financial reward — they pay gas and the client gets their own money back. The only realistic griefer is one acting out of pure spite at their own expense.
 
 **Recommended fix (two options):**
 
@@ -109,30 +138,22 @@ Note: this is a design tradeoff. If the current "deadline is absolute" behaviour
 
 ---
 
-### M-03 — `_requireChildrenTerminal` only checks direct children, not grandchildren
+### L-04 (was M-03) — Deep-tree fund lock: funds are always recoverable via bottom-up expire
 
-**Severity:** Medium  
-**Location:** `Cascade.sol:466–474`
+**Severity:** Low (downgraded from Medium after adversarial testing — permanent fund loss is not possible)  
+**Location:** `Cascade.sol:466–474`, `Cascade.sol:262–328`
 
-```solidity
-function _requireChildrenTerminal(uint256 parentId) internal view {
-    uint256[] storage kids = _children[parentId];
-    uint256 len = kids.length;
-    for (uint256 i; i < len; ) {
-        State s = _commitments[kids[i]].state;
-        if (s != State.Succeeded && s != State.Failed) revert ChildrenNotTerminal();
-        unchecked { ++i; }
-    }
-}
-```
+**Design intent (correct):** `_requireChildrenTerminal` checks only *direct* children. This enforces the bottom-up resolution order: to resolve a parent you must first resolve all its children, to depth. `submit` and `cancel` enforce this; `expire` does too.
 
-**Risk:** This is intentional by design — only direct children are checked. But the NatSpec on `submit` and `cancel` says "All direct children must be terminal." If a manager has a child that itself has active grandchildren, the manager cannot submit or cancel until those grandchildren are resolved first (they would need to submit/cancel/expire their own children first). This is the correct bottom-up resolution order.
+**Adversarial test result:** `test_M03_maxDepth_chain_fully_recoverable` builds a full 8-level-deep chain with all managers unresponsive and proves that bottom-up `expire` calls by any address recover 100% of funds to the client after the root deadline passes. No code path prevents this.
 
-**Risk is low for fund-loss**, but the design creates a potential fund-lock scenario: if a descendant at depth 8 is never resolved (manager is unresponsive and deadline has not passed), funds can sit locked until the deadline arrives. The only resolution path is `expire`, which requires the deadline to pass at every level bottom-up.
+**Key constraint that limits the risk:** `deadline > parent.deadline` reverts at `createChild` (line 276: `DeadlineExceedsParent`). A malicious manager at depth 1 cannot set a deadline longer than the root deadline. The root deadline is the absolute outer bound for the entire tree, set by the client when creating the root.
 
-**Impact:** Funds can be locked for the full duration of the deepest descendant's deadline. With MAX_DEPTH = 8 and no minimum deadline validation, a malicious manager could set a year-long deadline on a deep child, effectively locking funds in the subtree. The client's only protection is the root deadline, which acts as a hard outer bound.
+**Remaining concern (Low, not Medium):** There is no minimum deadline check. A root with a 1-year deadline locks funds for up to 1 year before permissionless expire is available. This is a design tradeoff, not a vulnerability — the client chooses the deadline.
 
-**Recommended fix:** Consider enforcing a minimum deadline (e.g., at least `block.timestamp + 1 hours`) and documenting the expected resolution pattern for deep trees. A `forceExpireTree` function (callable only after root deadline passes) could allow sweeping an entire subtree to `Failed` in one transaction — but adds significant complexity.
+**16-child slot — additional finding (Accept):** `childCount` is increment-only. A cancelled or expired child does not free its slot. After 16 children, no new children can be created even if all previous ones failed. Tested by `test_16child_failedChild_doesNotFreeSlot`. Impact: managers must plan work allocation upfront. Funds in failed children are always recoverable via expire; only the slot is permanently consumed.
+
+**Recommended action:** Document in NatSpec that `createChild` slots are permanent and that the root deadline bounds maximum lock duration. No code change required for V1.
 
 ---
 
@@ -270,8 +291,8 @@ No high or critical Slither detectors fired on Cascade source.
 
 ## Recommended actions before mainnet deployment
 
-1. **Address M-01**: Add `block.chainid` and USDC address assertions to the constructor.
-2. **Address M-02**: Decide on and document the expire-race policy for `Submitted` commitments; consider a grace period.
-3. **Address M-03**: Document the maximum fund-lock duration for deep trees; consider a minimum deadline validation.
-4. **Engage an independent professional auditor** before any mainnet deployment or handling of material funds.
+1. **Fix M-01**: Add `block.chainid` (covering both Arc Testnet 5042002 and Arc Mainnet 5042) and USDC address assertions to the constructor. Does not affect the current testnet deployment.
+2. **Document M-02**: Update NatSpec on `expire` to state explicitly that deadlines are absolute — a `Submitted` commitment can be expired once the deadline passes. Managers should not submit in the final block of their deadline window.
+3. **Document L-04 / 16-child**: Update NatSpec on `createChild` to state that child slots are permanent and the root deadline bounds the maximum recovery wait for any subtree.
+4. **Engage an independent professional auditor** before any mainnet deployment or handling of material funds. This review and its tests do not substitute for a professional audit.
 5. **Submit source verification** to the Arc Testnet explorer for public transparency.

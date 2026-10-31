@@ -48,7 +48,7 @@ bun run build
 
 ```bash
 bun run test
-# 125+ tests across 11 suites (vitest)
+# 369 tests across 14 suites (vitest)
 ```
 
 Test files live in `src/test/`. They cover:
@@ -65,7 +65,10 @@ Test files live in `src/test/`. They cover:
 | `fontsize.test.tsx` | Typography token compliance |
 | `activity.test.ts` | Activity event field correctness |
 | `router.test.ts` | Pathname router |
-| `contentRoutes.test.tsx` | Content route rendering |
+| `contentRoutes.test.tsx` | Content route rendering (docs site) |
+| `docsContent.test.ts` | Docs markdown loading and raw import validation |
+| `linkCrawler.test.tsx` | Dead-link check across all content routes |
+| `rootNav.test.tsx` | Reactive root navigation |
 
 ---
 
@@ -82,8 +85,9 @@ Foundry test files:
 |------|----------|
 | `contracts/test/Cascade.t.sol` | 60 unit tests — all write paths, permission guards, accounting |
 | `contracts/test/CascadeFuzz.t.sol` | 10 fuzz tests + 6 invariant tests |
+| `contracts/test/CascadeAdversarial.t.sol` | 26 adversarial tests — expiry races, deep trees, 16-child limit, accounting invariants |
 
-Total: **76 tests**.
+Total: **102 tests**.
 
 ---
 
