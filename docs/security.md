@@ -118,4 +118,4 @@ See [SECURITY.md](../SECURITY.md) for responsible disclosure instructions.
 
 ## Audit status
 
-Cascade V1 has not undergone a professional security audit. It is deployed on testnet for evaluation purposes. **Do not use on mainnet with real funds before obtaining an independent audit.**
+Cascade V1 has not undergone a professional security audit. It is deployed on both Arc Testnet (evaluation) and Arc Mainnet (real USDC). **No independent security audit has been completed. Use amounts proportionate to the risk of an unaudited contract.**

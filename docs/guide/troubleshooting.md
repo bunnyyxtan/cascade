@@ -4,7 +4,9 @@
 
 The app checks your wallet's chain ID on connection. If your wallet is on the wrong network, the app shows a "Wrong network" banner and disables all write operations.
 
-**Fix:** switch your wallet to Arc Testnet (chain id 5042002, RPC `https://rpc.testnet.arc.io`). The app may prompt you to switch automatically.
+**Fix:** switch your wallet to the correct Arc network. The app may prompt you to switch automatically.
+- Arc Mainnet: chain id `5042`, RPC `https://rpc.mainnet.arc.io`
+- Arc Testnet: chain id `5042002`, RPC `https://rpc.testnet.arc.io`
 
 ## "Verifying contract…" or "Couldn't verify"
 
@@ -20,7 +22,7 @@ On startup the app fetches the deployed bytecode and computes its keccak256. If 
 
 ## Missing history while syncing
 
-After connection, the app fetches commitment events from the deploy block (69,056,151) forward. On first load this can take a few seconds. The Activity tab shows a progress indicator. If a commitment you expect to see is missing, wait for the sync to complete before investigating further.
+After connection, the app fetches commitment events from the configured deploy block forward (mainnet: 28,866,425; testnet: 69,056,151). On first load this can take a few seconds. The Activity tab shows a progress indicator. If a commitment you expect to see is missing, wait for the sync to complete before investigating further.
 
 ## Allowance issues
 
@@ -28,7 +30,7 @@ If the approve step fails or was rejected, a leftover non-zero allowance can pre
 
 ## Balance appears as two numbers
 
-On Arc Testnet, USDC is both the ERC-20 token and the native gas token. Your wallet may show a "USDC" ERC-20 balance (6 decimals) and a native "USDC" balance (18 decimals). These are the **same pool of money** exposed two ways. The Cascade app always uses the ERC-20 view (6 decimals). Do not add them together — that would double-count.
+On Arc (mainnet and testnet), USDC is both the ERC-20 token and the native gas token. Your wallet may show a "USDC" ERC-20 balance (6 decimals) and a native "USDC" balance (18 decimals). These are the **same pool of money** exposed two ways. The Cascade app always uses the ERC-20 view (6 decimals). Do not add them together — that would double-count.
 
 ## Still stuck?
 

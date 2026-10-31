@@ -17,6 +17,7 @@
 import { PageHead } from '../PageHead'
 import { LegalLayout, LegalSection } from '../LegalLayout'
 import { CONTACT_MAILTO, CONTACT_EMAIL } from '../site'
+import { NETWORK_LABEL, RPC_URL } from '@/lib/network'
 
 const SECTIONS = [
   { id: 'overview',        title: 'Overview' },
@@ -63,10 +64,10 @@ export function PrivacyPage({ onHome }: { onHome: () => void }) {
         <LegalSection id="third-parties" num={3} title="Third-party services">
           <p className="md-p">
             <strong>Arc RPC node</strong>{' '}
-            (<code className="md-inline-code">rpc.testnet.arc.io</code>): every blockchain
-            read and transaction your browser makes passes through this endpoint. It receives
-            your IP address, the request content (including any wallet addresses you query),
-            and any transactions you submit.
+            (<code className="md-inline-code">{RPC_URL.replace(/^https?:\/\//, '')}</code> — {NETWORK_LABEL}):
+            every blockchain read and transaction your browser makes passes through this endpoint.
+            It receives your IP address, the request content (including any wallet addresses you
+            query), and any transactions you submit.
           </p>
           <p className="md-p">
             <strong>Ethereum mainnet public RPC</strong>: ConnectKit may perform an ENS

@@ -1,6 +1,6 @@
 # Overview
 
-Cascade is a programmable financial-authority protocol. A client funds an outcome in USDC, sets a delegation limit, and the manager they appoint can further delegate portions of that budget to specialists — all enforced by an immutable smart contract on Arc Testnet, with no admin key, no protocol fee, and no upgrade path.
+Cascade is a programmable financial-authority protocol. A client funds an outcome in USDC, sets a delegation limit, and the manager they appoint can further delegate portions of that budget to specialists — all enforced by an immutable smart contract on Arc, with no admin key, no protocol fee, and no upgrade path.
 
 ## What the tree model means
 
@@ -37,15 +37,14 @@ Role assignments are set at commitment creation and **cannot be changed**.
 
 ## What V1 is — and isn't
 
-V1 is a testnet deployment on Arc Testnet (chain id 5042002). It is:
+V1 is deployed on both Arc Mainnet (chain id 5042) and Arc Testnet (chain id 5042002). It is:
 
-- A working, auditable smart contract with 76 automated tests.
+- A working, auditable smart contract with 112 automated tests.
 - A web application for creating, managing and settling commitments.
 - A single-contract system with no off-chain components affecting fund custody.
 
 V1 is **not**:
 
-- Deployed on mainnet (planned, not done).
 - An SDK, agent runtime, or AI evaluator.
 - A system with multi-sig, dispute resolution, or partial release.
 - Audited by an external security firm.

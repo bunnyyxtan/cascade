@@ -1,14 +1,16 @@
 # Deployment
 
-## Testnet deployment (current)
+## Active deployments
 
 | Network | Chain ID | Address | Deploy block | Explorer |
 |---------|----------|---------|--------------|---------|
+| Arc Mainnet | 5042 | `0x05B07ed8F2efAc05E20eCeeb0d8816248C73F14f` | 28,866,425 | [View](https://explorer.arc.io/address/0x05B07ed8F2efAc05E20eCeeb0d8816248C73F14f) |
 | Arc Testnet | 5042002 | `0xa87371b1127d88df309313ddcaa43b6191fa9a57` | 69,056,151 | [View](https://explorer.testnet.arc.io/address/0xa87371b1127d88df309313ddcaa43b6191fa9a57) |
 
-Deploy tx: `0x0e07a498c287e26481ea5150968741dea3210e2ad1c0a552bcd15f508fa82a6a`
+Mainnet deploy tx: `0xc6cb7ec3a2d6727da67e991da22790b7df77a154a83ad4ddaf008cc7ff945c21`
+Testnet deploy tx: `0x0e07a498c287e26481ea5150968741dea3210e2ad1c0a552bcd15f508fa82a6a`
 
-Runtime codehash (keccak256 of deployed bytecode):
+Runtime codehash (keccak256 of deployed bytecode — identical on both networks):
 `0xdae313ed3e636b9ee2cc0067af1a501ad8128e031a2d23b5f2d5e78ae1cd8e29`
 
 ---
@@ -110,6 +112,21 @@ forge script contracts/script/DeployCreate2.s.sol \
 
 The frontend verifies the deployed contract on every startup. To confirm manually:
 
+Arc Mainnet:
+
+```bash
+RPC_URL=https://rpc.mainnet.arc.io
+ADDRESS=0x05B07ed8F2efAc05E20eCeeb0d8816248C73F14f
+EXPECTED=0xdae313ed3e636b9ee2cc0067af1a501ad8128e031a2d23b5f2d5e78ae1cd8e29
+
+actual=$(cast keccak $(cast code "$ADDRESS" --rpc-url "$RPC_URL"))
+echo "Expected: $EXPECTED"
+echo "Actual:   $actual"
+[ "$actual" = "$EXPECTED" ] && echo "✓ match" || echo "✗ mismatch"
+```
+
+Arc Testnet:
+
 ```bash
 RPC_URL=https://rpc.testnet.arc.io
 ADDRESS=0xa87371b1127d88df309313ddcaa43b6191fa9a57
@@ -135,15 +152,15 @@ Deploy `dist/` to any static host (Vercel, Netlify, Cloudflare Pages, etc.).
 
 ---
 
-## Mainnet
+## Deploying a new instance
 
-Mainnet deployment has not been performed. Before a mainnet deployment:
+If you want to deploy your own instance of the Cascade contract to any Arc network:
 
-1. Obtain an independent security audit.
-2. Verify the frontend `.env` values (network, contract address, codehash) with great care.
-3. Test the full user flow on testnet with the exact same build.
-4. Deploy from your own wallet — the platform deployer is testnet-only.
+1. Obtain an independent security audit before handling real funds.
+2. Verify all frontend `.env` values (network, contract address, codehash) with great care.
+3. Test the full user flow on testnet with the exact same build first.
+4. Deploy from your own wallet using the mainnet deployment script (`contracts/script/DeployCascadeMainnet.s.sol`) or a direct `forge create`.
 5. Confirm the runtime codehash after deployment.
 
-Arc Mainnet RPC: `https://rpc.mainnet.arc.io`
-Arc Mainnet chain ID: `5042`
+Arc Mainnet RPC: `https://rpc.mainnet.arc.io`, chain ID: `5042`
+Arc Testnet RPC: `https://rpc.testnet.arc.io`, chain ID: `5042002`

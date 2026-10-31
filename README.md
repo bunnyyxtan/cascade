@@ -9,6 +9,8 @@
 </p>
 
 <p align="center">
+  <a href="https://explorer.arc.io/address/0x05B07ed8F2efAc05E20eCeeb0d8816248C73F14f">Arc Mainnet</a>
+  ·
   <a href="https://explorer.testnet.arc.io/address/0xa87371b1127d88df309313ddcaa43b6191fa9a57">Arc Testnet</a>
   ·
   <a href="docs/architecture.md">Architecture</a>
@@ -40,13 +42,16 @@ Client funds a root commitment
 - **Pull-based claims** — successful payouts go to a `claimable` balance; workers claim at their own pace.
 - **Permissionless expiry** — anyone can expire any commitment whose deadline has passed and whose children are terminal, enabling bottom-up recovery of locked funds.
 
-## Testnet deployment
+## Deployments
 
 | Network | Chain ID | Contract |
 |---------|----------|---------|
+| Arc Mainnet | 5042 | [`0x05B07ed8F2efAc05E20eCeeb0d8816248C73F14f`](https://explorer.arc.io/address/0x05B07ed8F2efAc05E20eCeeb0d8816248C73F14f) |
 | Arc Testnet | 5042002 | [`0xa87371b1127d88df309313ddcaa43b6191fa9a57`](https://explorer.testnet.arc.io/address/0xa87371b1127d88df309313ddcaa43b6191fa9a57) |
 
-USDC on Arc (testnet and mainnet): `0x3600000000000000000000000000000000000000` · 6 decimals
+USDC (Arc mainnet and testnet): `0x3600000000000000000000000000000000000000` · 6 decimals (ERC-20 view)
+
+Both deployments use the same compiled bytecode (runtime codehash `0xdae313ed3e636b9ee2cc0067af1a501ad8128e031a2d23b5f2d5e78ae1cd8e29`).
 
 ## Architecture
 
@@ -61,7 +66,7 @@ USDC on Arc (testnet and mainnet): `0x3600000000000000000000000000000000000000` 
 └────────────────────┬────────────────────────┘
                      │ viem / wagmi
 ┌────────────────────▼────────────────────────┐
-│  Cascade.sol  (Arc Testnet)                 │
+│  Cascade.sol  (Arc Mainnet / Arc Testnet)   │
 │  Immutable · no admin · USDC ERC-20 only    │
 │  SafeERC20 · ReentrancyGuard · Checks-      │
 │  Effects-Interactions throughout            │
@@ -87,7 +92,9 @@ See [`docs/architecture.md`](docs/architecture.md) for a full component and mone
 - [Bun](https://bun.sh) ≥ 1.1 — `curl -fsSL https://bun.sh/install | bash`
 - [Foundry](https://getfoundry.sh) — `curl -L https://foundry.paradigm.sh | bash && foundryup`
 - A browser wallet (MetaMask, Coinbase Wallet, etc.)
-- Arc Testnet added to your wallet — RPC: `https://rpc.testnet.arc.io`, Chain ID: `5042002`
+- Arc network added to your wallet:
+  - Mainnet: RPC `https://rpc.mainnet.arc.io`, Chain ID `5042`
+  - Testnet: RPC `https://rpc.testnet.arc.io`, Chain ID `5042002`
 
 ## Installation
 
@@ -105,7 +112,7 @@ Forge-std is vendored under `lib/forge-std/` (plain copy, no submodule). OpenZep
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `VITE_NETWORK` | Yes | `testnet` to connect to Arc Testnet |
+| `VITE_NETWORK` | Yes | `mainnet` for Arc Mainnet; `testnet` (default) for Arc Testnet |
 | `VITE_CASCADE_ADDRESS` | Yes | Deployed contract address |
 | `VITE_CASCADE_DEPLOY_BLOCK` | Recommended | Deploy block — speeds up event history sync |
 | `VITE_CASCADE_CODEHASH` | Recommended | Runtime codehash — absent means writes are blocked |
@@ -114,7 +121,7 @@ Forge-std is vendored under `lib/forge-std/` (plain copy, no submodule). OpenZep
 | `VITE_RPC_PROXY_TOKEN` | Arc Studio only | Injected automatically in Arc Studio |
 | `VITE_RPC_PROXY_CHAINS` | Arc Studio only | Injected automatically in Arc Studio |
 
-The testnet values for `VITE_CASCADE_ADDRESS`, `VITE_CASCADE_DEPLOY_BLOCK`, and `VITE_CASCADE_CODEHASH` are in `.env.example`.
+The testnet values for `VITE_CASCADE_ADDRESS`, `VITE_CASCADE_DEPLOY_BLOCK`, and `VITE_CASCADE_CODEHASH` are in `.env.example`. Mainnet values are recorded in `docs/deployment.md`.
 
 ## Running locally
 
@@ -135,14 +142,14 @@ bun run build       # TypeScript check + Vite production build → dist/
 ### Frontend
 
 ```bash
-bun run test        # 369 tests across 14 suites
+bun run test        # 379 tests across 15 suites
 ```
 
 ### Smart contracts
 
 ```bash
 bun run contracts:build   # compile with Foundry
-bun run contracts:test    # 102 tests: 60 unit + 10 fuzz + 6 invariant + 26 adversarial
+bun run contracts:test    # 112 tests: 60 unit + 10 fuzz + 6 invariant + 26 adversarial + 10 deployment
 ```
 
 ### Lint and typecheck
@@ -178,7 +185,7 @@ bun run fetch:abi
 
 ## Security
 
-The contract has not undergone a professional third-party audit. Do not use on mainnet with real funds before an independent audit is completed. See [`docs/security-review.md`](docs/security-review.md) for the current review status and [`SECURITY.md`](SECURITY.md) for the vulnerability reporting policy.
+The contract has not undergone a professional third-party audit. Cascade V1 is deployed on Arc Mainnet. Use amounts proportionate to the risk of an unaudited contract. See [`docs/security-review.md`](docs/security-review.md) for the current review status and [`SECURITY.md`](SECURITY.md) for the vulnerability reporting policy.
 
 ## License
 

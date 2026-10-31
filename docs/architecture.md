@@ -21,7 +21,7 @@ Browser
                 │  wagmi / viem  (read: eth_call, eth_getLogs)
                 │               (write: eth_sendTransaction)
                 │
-          Arc Testnet RPC
+          Arc RPC (mainnet or testnet)
                 │
           Cascade.sol  ─── USDC ERC-20 (0x3600…)
 ```

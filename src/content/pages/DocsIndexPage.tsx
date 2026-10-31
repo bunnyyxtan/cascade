@@ -3,6 +3,7 @@ import { DocsLayout } from '../DocsLayout'
 import { contentNavigate } from '@/router'
 import { DOCS_ENTRIES } from '../docsRegistry'
 import type { DocEntry } from '../docsRegistry'
+import { NETWORK_LABEL } from '@/lib/network'
 
 interface Props { docs: DocEntry[]; onHome: () => void }
 
@@ -27,7 +28,7 @@ export function DocsIndexPage({ docs, onHome }: Props) {
       <DocsLayout slug="overview" title="Documentation" headings={[]} docs={docs} onHome={onHome}>
         <h1 className="md-h1">Documentation</h1>
         <p className="md-p">
-          Cascade is a programmable financial-authority protocol on Arc Testnet. Browse by topic
+          Cascade is a programmable financial-authority protocol on {NETWORK_LABEL}. Browse by topic
           below, or use the sidebar to jump to any article.
         </p>
 

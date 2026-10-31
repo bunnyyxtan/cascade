@@ -1,16 +1,23 @@
 # Quick start
 
-This guide walks you through creating an objective, delegating work, submitting and approving a delivery, and withdrawing your USDC — all on Arc Testnet.
+This guide walks you through creating an objective, delegating work, submitting and approving a delivery, and withdrawing your USDC.
+
+It applies to both Arc Mainnet (real USDC) and Arc Testnet (test USDC with no monetary value). The steps are identical; only the network and USDC value differ.
 
 ## Prerequisites
 
 1. **A browser-extension wallet** — MetaMask or any EIP-1193-compatible extension.
-2. **Arc Testnet configured** — chain id `5042002`, RPC `https://rpc.testnet.arc.io`. Your wallet may auto-detect this when you connect.
-3. **Test USDC** — on Arc Testnet, USDC is also the native gas token, so one balance covers both gas and funding. Get test USDC from the [Circle Testnet Faucet](https://faucet.circle.com) or the "Get test USDC" button in the Arc Studio sidebar (if you are using Arc Studio).
+2. **Arc Mainnet or Testnet configured:**
+   - Mainnet: chain id `5042`, RPC `https://rpc.mainnet.arc.io`
+   - Testnet: chain id `5042002`, RPC `https://rpc.testnet.arc.io`
+   Your wallet may auto-detect the network when you connect.
+3. **USDC** — on Arc, USDC is also the native gas token, so one balance covers both gas and funding.
+   - Mainnet: acquire USDC via a bridge or exchange.
+   - Testnet: get test USDC from the [Circle Testnet Faucet](https://faucet.circle.com) or the "Get test USDC" button in the Arc Studio sidebar.
 
 ## Step 1 — Connect your wallet
 
-Click **Connect Wallet** in the top-right corner. Select your extension wallet and accept the connection request. The app checks that you are on Arc Testnet (chain id 5042002) and that the deployed contract bytecode matches the expected codehash before enabling any write operations.
+Click **Connect Wallet** in the top-right corner. Select your extension wallet and accept the connection request. The app checks that you are on the correct network and that the deployed contract bytecode matches the expected codehash before enabling any write operations.
 
 ## Step 2 — Create an objective (root)
 

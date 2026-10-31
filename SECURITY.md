@@ -2,11 +2,12 @@
 
 ## Supported versions
 
-Cascade V1 is currently deployed on Arc Testnet only. There is no mainnet deployment.
+Cascade V1 is deployed on Arc Mainnet (chain id 5042) and Arc Testnet (chain id 5042002).
 
-| Version | Status |
-|---------|--------|
-| v0.1.x (testnet) | Active development |
+| Version | Network | Status |
+|---------|---------|--------|
+| v0.1.x | Arc Mainnet (5042) | Active |
+| v0.1.x | Arc Testnet (5042002) | Active |
 
 ---
 
@@ -50,11 +51,11 @@ If you discover a security issue, please report it responsibly:
 We follow coordinated disclosure. We ask that you:
 
 - Give us reasonable time to investigate and patch before public disclosure.
-- Not exploit the vulnerability on mainnet or against real user funds.
+- Not exploit the vulnerability against real user funds on mainnet.
 - Not disclose the details publicly until a fix has been released or we have agreed on a disclosure timeline.
 
 ---
 
 ## Audit status
 
-Cascade V1 has not undergone a professional smart contract security audit. It is deployed on testnet for evaluation only. **Do not use on mainnet with real funds before an independent audit is completed.**
+Cascade V1 has not undergone a professional smart contract security audit. It is deployed on Arc Mainnet (real USDC) and Arc Testnet (evaluation). **No independent security audit has been completed. Use amounts proportionate to the risk of an unaudited contract.**

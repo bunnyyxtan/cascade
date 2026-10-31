@@ -2,6 +2,8 @@ import { PageHead } from '../PageHead'
 import { DocsLayout } from '../DocsLayout'
 import { CONTACT_MAILTO, CONTACT_EMAIL } from '../site'
 import { contentNavigate } from '@/router'
+import { IS_MAINNET, NETWORK_LABEL, CHAIN_ID, RPC_URL } from '@/lib/network'
+import { CASCADE_ADDRESS } from '@/lib/contracts'
 import type { DocEntry } from '../docsRegistry'
 
 const LAST_UPDATED = '31 Oct 2026'
@@ -61,7 +63,7 @@ export function SecurityPage({ docs, onHome }: Props) {
         </p>
         <ul className="md-ul">
           <li className="md-li">
-            <strong>The Arc network.</strong> Cascade relies on Arc Testnet (chain id 5042002) for
+            <strong>The Arc network.</strong> Cascade relies on {NETWORK_LABEL} (chain id {CHAIN_ID}) for
             transaction ordering, finality, and state. A chain-level event (e.g. a reorg) could
             affect contract state.
           </li>
@@ -72,7 +74,7 @@ export function SecurityPage({ docs, onHome }: Props) {
           </li>
           <li className="md-li">
             <strong>The RPC endpoint.</strong> The application reads chain state and submits
-            transactions through <code className="md-inline-code">rpc.testnet.arc.io</code>. A
+            transactions through <code className="md-inline-code">{RPC_URL}</code>. A
             compromised or unavailable RPC could show you incorrect data, though the contract
             itself would remain unaffected.
           </li>
@@ -107,8 +109,9 @@ export function SecurityPage({ docs, onHome }: Props) {
           You can verify that the deployed contract matches the published source by reproducing
           the codehash:
         </p>
-        <pre className="md-pre"><code>{`RPC_URL=https://rpc.testnet.arc.io
-ADDRESS=0xa87371b1127d88df309313ddcaa43b6191fa9a57
+        <pre className="md-pre"><code>{`# ${IS_MAINNET ? 'Arc Mainnet' : 'Arc Testnet'}
+RPC_URL=${RPC_URL}
+ADDRESS=${CASCADE_ADDRESS || '<not-deployed>'}
 EXPECTED=0xdae313ed3e636b9ee2cc0067af1a501ad8128e031a2d23b5f2d5e78ae1cd8e29
 
 actual=$(cast keccak $(cast code "$ADDRESS" --rpc-url "$RPC_URL"))
@@ -136,14 +139,21 @@ echo "Actual:   $actual"
           <strong>No external security audit has been completed.</strong>
         </p>
         <p className="md-p">
-          The contract has 76 Foundry tests: 60 unit tests, 10 fuzz tests (256 runs each), and
-          6 invariant tests (256 runs, 500 calls each). All 76 pass. The source has not yet been
-          submitted for block-explorer source verification.
+          The contract has 112 Foundry tests: 60 unit tests, 10 fuzz tests, 6 invariant tests,
+          and 26 adversarial tests (all pass). The source has not yet been submitted for
+          block-explorer source verification on either network.
         </p>
-        <p className="md-p">
-          Cascade V1 is deployed on Arc Testnet only. Do not use it with real funds before an
-          independent audit has been completed.
-        </p>
+        {IS_MAINNET ? (
+          <p className="md-p">
+            Cascade V1 is deployed on Arc Mainnet. No independent professional security audit has
+            been completed. Use amounts proportionate to the risk of an unaudited contract.
+          </p>
+        ) : (
+          <p className="md-p">
+            Cascade V1 is deployed on Arc Testnet for evaluation. An independent audit has not
+            been completed. Test USDC has no monetary value.
+          </p>
+        )}
 
         <h2 className="md-h2" id="reporting">Reporting a vulnerability</h2>
         <p className="md-p">

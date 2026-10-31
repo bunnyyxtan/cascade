@@ -2,6 +2,8 @@ import { PageHead } from '../PageHead'
 import { LegalLayout, LegalSection } from '../LegalLayout'
 import { CONTACT_MAILTO, CONTACT_EMAIL } from '../site'
 import { contentNavigate } from '@/router'
+import { IS_MAINNET, NETWORK_LABEL } from '@/lib/network'
+import { CASCADE_ADDRESS, addrUrl } from '@/lib/contracts'
 
 const SECTIONS = [
   { id: 'who-runs-cascade',    title: 'Who runs Cascade' },
@@ -11,19 +13,17 @@ const SECTIONS = [
   { id: 'no-audit',            title: 'No external audit' },
   { id: 'no-guarantees',       title: 'No guarantees' },
   { id: 'public-data',         title: 'Public data' },
-  { id: 'testnet-today',       title: 'Testnet today' },
+  { id: 'network',             title: 'Network' },
   { id: 'changes',             title: 'Changes to this page' },
 ]
 
-const CONTRACT_ADDRESS = '0xa87371b1127d88df309313ddcaa43b6191fa9a57'
-const EXPLORER_URL = `https://explorer.testnet.arc.io/address/${CONTRACT_ADDRESS}`
-
 export function UsageRisksPage({ onHome }: { onHome: () => void }) {
+  const explorerUrl = CASCADE_ADDRESS ? addrUrl(CASCADE_ADDRESS) : '#'
   return (
     <>
       <PageHead
         title="Usage & Risks — Cascade"
-        description="What Cascade is, who runs it, and the risks of using smart contract software on Arc Testnet."
+        description={`What Cascade is, who runs it, and the risks of using smart contract software on ${NETWORK_LABEL}.`}
       />
       <LegalLayout
         title="Usage &amp; Risks"
@@ -58,15 +58,19 @@ export function UsageRisksPage({ onHome }: { onHome: () => void }) {
         <LegalSection id="contract-holds-funds" num={3} title="The contract holds the funds">
           <p className="md-p">
             USDC is held by the Cascade smart contract, not by the operator. The contract address
-            on Arc Testnet is{' '}
-            <a
-              href={EXPLORER_URL}
-              target="_blank"
-              rel="noreferrer"
-              className="md-link"
-            >
-              <code className="md-inline-code">{CONTRACT_ADDRESS}</code>
-            </a>.
+            on {NETWORK_LABEL} is{' '}
+            {CASCADE_ADDRESS ? (
+              <a
+                href={explorerUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="md-link"
+              >
+                <code className="md-inline-code">{CASCADE_ADDRESS}</code>
+              </a>
+            ) : (
+              <em>not yet deployed</em>
+            )}.
           </p>
           <p className="md-p">
             The operator cannot move, freeze, or recover funds from the contract. The contract
@@ -90,8 +94,8 @@ export function UsageRisksPage({ onHome }: { onHome: () => void }) {
         <LegalSection id="no-audit" num={5} title="No external audit">
           <p className="md-p">
             The Cascade contract has not been audited by an independent security firm. It has
-            76 automated Foundry tests covering unit, fuzz, and invariant scenarios, but tests
-            do not guarantee the absence of bugs.
+            112 automated Foundry tests covering unit, fuzz, invariant, and adversarial scenarios,
+            but tests do not guarantee the absence of bugs.
           </p>
           <p className="md-p">
             Use small amounts while the contract is unaudited. See the{' '}
@@ -134,15 +138,49 @@ export function UsageRisksPage({ onHome }: { onHome: () => void }) {
           </p>
         </LegalSection>
 
-        <LegalSection id="testnet-today" num={8} title="Testnet today">
-          <p className="md-p">
-            Cascade V1 is deployed on <strong>Arc Testnet only</strong> (chain id 5042002).
-            Test USDC has no monetary value. Do not treat testnet interactions as financially
-            binding agreements.
-          </p>
-          <p className="md-p">
-            Mainnet deployment has not occurred. It is planned but has no confirmed date.
-          </p>
+        <LegalSection id="network" num={8} title="Network">
+          {IS_MAINNET ? (
+            <>
+              <p className="md-p">
+                Cascade V1 is deployed on <strong>Arc Mainnet</strong> (chain id 5042).
+                USDC on Arc Mainnet has real monetary value. Creating or settling a commitment
+                transfers real USDC. Do not sign transactions unless you understand and intend
+                the outcome.
+              </p>
+              <p className="md-p">
+                Cascade has not undergone an independent professional security audit. Use amounts
+                you are comfortable losing in the event of an undiscovered bug.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="md-p">
+                This instance of Cascade is connected to <strong>Arc Testnet</strong> (chain id 5042002).
+                Test USDC has no monetary value. Do not treat testnet interactions as financially
+                binding agreements.
+              </p>
+              <p className="md-p">
+                Cascade V1 is also deployed on Arc Mainnet (chain id 5042) at{' '}
+                <a
+                  href="https://explorer.arc.io/address/0x05B07ed8F2efAc05E20eCeeb0d8816248C73F14f"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="md-link"
+                >
+                  0x05B07ed8F2efAc05E20eCeeb0d8816248C73F14f
+                </a>.
+                See the{' '}
+                <a
+                  href="/docs/networks-and-addresses"
+                  onClick={e => { e.preventDefault(); contentNavigate('/docs/networks-and-addresses') }}
+                  className="md-link"
+                >
+                  Networks and addresses
+                </a>{' '}
+                article for details.
+              </p>
+            </>
+          )}
         </LegalSection>
 
         <LegalSection id="changes" num={9} title="Changes to this page">

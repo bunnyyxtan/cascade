@@ -3,6 +3,8 @@ import { Plus } from 'lucide-react'
 import { PageHead } from '../PageHead'
 import { DocsLayout } from '../DocsLayout'
 import { contentNavigate } from '@/router'
+import { IS_MAINNET, NETWORK_LABEL } from '@/lib/network'
+import { CASCADE_ADDRESS } from '@/lib/contracts'
 import type { DocEntry } from '../docsRegistry'
 
 const LAST_UPDATED = '31 Oct 2026'
@@ -18,7 +20,8 @@ interface FaqGroup {
   items: FaqItem[]
 }
 
-const FAQ_GROUPS: FaqGroup[] = [
+function buildFaqGroups(networkLabel: string, isMainnet: boolean, cascadeAddress: string): FaqGroup[] {
+  return [
   {
     title: 'Basics',
     items: [
@@ -28,7 +31,7 @@ const FAQ_GROUPS: FaqGroup[] = [
         answer: (
           <>
             <p>
-              Cascade is a smart-contract protocol on Arc Testnet that lets a client fund an
+              Cascade is a smart-contract protocol on {networkLabel} that lets a client fund an
               objective in USDC, appoint a manager, set a delegation limit, and then let the
               manager create child commitments for specialists — all enforced onchain with no
               admin key.
@@ -46,11 +49,20 @@ const FAQ_GROUPS: FaqGroup[] = [
       {
         id: 'is-mainnet-live',
         question: 'Is mainnet live?',
-        answer: (
+        answer: isMainnet ? (
           <p>
-            No. Cascade V1 is deployed on Arc Testnet (chain id 5042002) only. Test USDC has
-            no monetary value. Mainnet deployment is planned but has no confirmed date.
-            See{' '}
+            Yes. Cascade V1 is deployed on Arc Mainnet (chain id 5042). USDC on Arc Mainnet
+            has real monetary value. See{' '}
+            <a href="/docs/networks-and-addresses" onClick={e => { e.preventDefault(); contentNavigate('/docs/networks-and-addresses') }}>
+              Networks and addresses
+            </a>{' '}
+            for the contract address and verification details.
+          </p>
+        ) : (
+          <p>
+            Cascade V1 is deployed on both Arc Testnet (chain id 5042002) and Arc Mainnet
+            (chain id 5042). This instance is connected to Arc Testnet. Test USDC has no
+            monetary value. See{' '}
             <a href="/docs/networks-and-addresses" onClick={e => { e.preventDefault(); contentNavigate('/docs/networks-and-addresses') }}>
               Networks and addresses
             </a>.
@@ -107,11 +119,11 @@ const FAQ_GROUPS: FaqGroup[] = [
         answer: (
           <>
             <p>
-              USDC is held by the Cascade contract at{' '}
-              <code>0xa87371b1127d88df309313ddcaa43b6191fa9a57</code>. Neither the operator
-              nor any other address can move it. It can only be released through the contract's
-              own rules — by approving a commitment or by a failure (rejection, cancellation,
-              expiry) that returns it to the parent or client.
+              USDC is held by the Cascade contract
+              {cascadeAddress ? <> at{' '}<code>{cascadeAddress}</code></> : null}.
+              {' '}Neither the operator nor any other address can move it. It can only be
+              released through the contract's own rules — by approving a commitment or by a
+              failure (rejection, cancellation, expiry) that returns it to the parent or client.
             </p>
             <p>
               See{' '}
@@ -255,7 +267,8 @@ const FAQ_GROUPS: FaqGroup[] = [
       },
     ],
   },
-]
+  ]
+}
 
 interface AccordionItemProps { item: FaqItem }
 
@@ -294,6 +307,7 @@ function AccordionItem({ item }: AccordionItemProps) {
 interface Props { docs: DocEntry[]; onHome: () => void }
 
 export function FaqPage({ docs, onHome }: Props) {
+  const FAQ_GROUPS = buildFaqGroups(NETWORK_LABEL, IS_MAINNET, CASCADE_ADDRESS)
   // Build TOC headings from groups
   const headings = FAQ_GROUPS.map(g => ({
     id:    g.title.toLowerCase().replace(/\s+/g, '-'),

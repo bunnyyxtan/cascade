@@ -2,6 +2,8 @@ import { PageHead } from '../PageHead'
 import { DocsLayout } from '../DocsLayout'
 import { CONTACT_MAILTO, CONTACT_EMAIL } from '../site'
 import { contentNavigate } from '@/router'
+import { IS_MAINNET, NETWORK_LABEL, CHAIN_ID } from '@/lib/network'
+import { CASCADE_ADDRESS } from '@/lib/contracts'
 import type { DocEntry } from '../docsRegistry'
 
 const LAST_UPDATED = '31 Oct 2026'
@@ -36,7 +38,7 @@ export function SupportPage({ docs, onHome }: Props) {
           <li className="md-li">Your wallet address (the one you used in Cascade)</li>
           <li className="md-li">The objective number (e.g. #7) or the commitment ID</li>
           <li className="md-li">The transaction hash, if the problem occurred during a transaction</li>
-          <li className="md-li">The network (Arc Testnet, chain id 5042002)</li>
+          <li className="md-li">The network ({NETWORK_LABEL}, chain id {CHAIN_ID})</li>
           <li className="md-li">A screenshot of any error message shown in the app or your wallet</li>
         </ul>
         <p className="md-p">
@@ -53,17 +55,28 @@ export function SupportPage({ docs, onHome }: Props) {
         </p>
         <ul className="md-ul">
           <li className="md-li">
-            <strong>Wrong network.</strong> Cascade only works on Arc Testnet (chain id 5042002).
-            If you see a "wrong network" banner, switch your wallet to Arc Testnet.
+            <strong>Wrong network.</strong> Cascade only works on {NETWORK_LABEL} (chain id {CHAIN_ID}).
+            If you see a "wrong network" banner, switch your wallet to {NETWORK_LABEL}.
           </li>
           <li className="md-li">
             <strong>"Couldn't verify contract" or "Verifying contract…"</strong> The app checks
             the deployed contract's codehash at startup. If this message persists, the RPC may
             be slow or the contract address in the app's config may not match what's on chain.
             Try refreshing. If it continues, check the{' '}
-            <a href="https://explorer.testnet.arc.io/address/0xa87371b1127d88df309313ddcaa43b6191fa9a57" target="_blank" rel="noreferrer" className="md-link">
-              block explorer
-            </a>.
+            {CASCADE_ADDRESS ? (
+              <a
+                href={IS_MAINNET
+                  ? `https://explorer.arc.io/address/${CASCADE_ADDRESS}`
+                  : `https://explorer.testnet.arc.io/address/${CASCADE_ADDRESS}`}
+                target="_blank"
+                rel="noreferrer"
+                className="md-link"
+              >
+                block explorer
+              </a>
+            ) : (
+              <span>block explorer</span>
+            )}.
           </li>
           <li className="md-li">
             <strong>Transaction rejected in wallet.</strong> A rejection in your wallet (error code

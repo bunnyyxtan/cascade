@@ -4,8 +4,8 @@ An objective is the top-level commitment you fund. It costs one ERC-20 approval 
 
 ## Before you begin
 
-- Your wallet must be connected and on Arc Testnet (chain id 5042002).
-- You need enough USDC for the budget amount plus a small amount for gas. On Arc Testnet, USDC covers both.
+- Your wallet must be connected and on the correct Arc network (Mainnet: chain id 5042; Testnet: chain id 5042002).
+- You need enough USDC for the budget amount plus a small amount for gas. On Arc, USDC covers both.
 - The app must show "Contract verified" in the status bar. If it shows "Verifying…" or "Couldn't verify", do not proceed — see [Troubleshooting](/docs/troubleshooting).
 
 ## Fields
