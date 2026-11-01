@@ -40,10 +40,10 @@ Both deployments use the same compiled bytecode (runtime codehash is identical).
 
 On Arc (both mainnet and testnet), USDC is the native gas token as well as an ERC-20. This means one pool of tokens is exposed two ways:
 
-- **ERC-20 view** — the address `0x3600000000000000000000000000000000000000`, 6 decimals. This is what Cascade uses for all escrow operations.
-- **Native view** — the balance your wallet uses for gas, shown with 18 decimals internally.
+- **ERC-20 view**: the address `0x3600000000000000000000000000000000000000`, 6 decimals. This is what Cascade uses for all escrow operations.
+- **Native view**: the balance your wallet uses for gas, shown with 18 decimals internally.
 
-Your wallet and the Cascade app both work with the ERC-20 view. You do not need a separate "gas token" — the same USDC covers both gas fees and funding.
+Your wallet and the Cascade app both work with the ERC-20 view. You do not need a separate "gas token". The same USDC covers both gas fees and funding.
 
 ## Verifying the contract
 
@@ -75,5 +75,5 @@ See [Verifying Cascade](/docs/verifying-cascade) for a full walkthrough.
 
 ## Related
 
-- [Verifying Cascade](/docs/verifying-cascade) — reproduce the codehash and understand the startup check
-- [Quick start](/docs/quick-start) — getting started on Arc Mainnet or Arc Testnet
+- [Verifying Cascade](/docs/verifying-cascade): reproduce the codehash and understand the startup check
+- [Quick start](/docs/quick-start): getting started on Arc Mainnet or Arc Testnet

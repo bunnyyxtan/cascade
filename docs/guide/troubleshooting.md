@@ -12,13 +12,13 @@ The app checks your wallet's chain ID on connection. If your wallet is on the wr
 
 On startup the app fetches the deployed bytecode and computes its keccak256. If the result does not match the expected codehash, all writes are gated until the check passes or the page is refreshed.
 
-- **"Verifying contract…"** — the check is still running (usually under 2 seconds). Wait for it to complete.
-- **"Couldn't verify"** — the check failed. This can mean: an RPC error, a network timeout, or (rarely) a genuine mismatch. Refresh the page. If it persists, the contract address or codehash in the app's configuration may be incorrect. See [Verifying Cascade](/docs/verifying-cascade).
+- **"Verifying contract..."**: the check is still running (usually under 2 seconds). Wait for it to complete.
+- **"Couldn't verify"**: the check failed. This can mean an RPC error, a network timeout, or (rarely) a genuine mismatch. Refresh the page. If it persists, the contract address or codehash in the app's configuration may be incorrect. See [Verifying Cascade](/docs/verifying-cascade).
 
 ## Rejected in wallet vs transaction failed
 
-- **User rejection** (you clicked Cancel / Reject in your wallet) — the app shows a neutral note, no error. Nothing happened onchain.
-- **Transaction reverted** — the contract rejected the transaction. The app shows a red error with the revert reason where available. Common reasons: wrong state (e.g. calling `approve` on a non-Submitted commitment), permissions (e.g. calling `cancel` when you are not the approver), or constraint violations (e.g. `DelegationCapacityExceeded`).
+- **User rejection** (you clicked Cancel or Reject in your wallet): the app shows a neutral note, no error. Nothing happened onchain.
+- **Transaction reverted**: the contract rejected the transaction. The app shows a red error with the revert reason where available. Common reasons: wrong state (e.g. calling `approve` on a non-Submitted commitment), permissions (e.g. calling `cancel` when you are not the approver), or constraint violations (e.g. `DelegationCapacityExceeded`).
 
 ## Missing history while syncing
 
@@ -30,7 +30,7 @@ If the approve step fails or was rejected, a leftover non-zero allowance can pre
 
 ## Balance appears as two numbers
 
-On Arc (mainnet and testnet), USDC is both the ERC-20 token and the native gas token. Your wallet may show a "USDC" ERC-20 balance (6 decimals) and a native "USDC" balance (18 decimals). These are the **same pool of money** exposed two ways. The Cascade app always uses the ERC-20 view (6 decimals). Do not add them together — that would double-count.
+On Arc (mainnet and testnet), USDC is both the ERC-20 token and the native gas token. Your wallet may show a "USDC" ERC-20 balance (6 decimals) and a native "USDC" balance (18 decimals). These are the **same pool of money** exposed two ways. The Cascade app always uses the ERC-20 view (6 decimals). Do not add them together; that would double-count.
 
 ## Still stuck?
 
@@ -42,6 +42,6 @@ Contact [bunnyyxtan@gmail.com](mailto:bunnyyxtan@gmail.com) or open a [GitHub is
 
 ## Related
 
-- [Verifying Cascade](/docs/verifying-cascade) — reproduce the codehash check manually
-- [Support](/support) — contact and GitHub
-- [Networks and addresses](/docs/networks-and-addresses) — RPC and chain configuration
+- [Verifying Cascade](/docs/verifying-cascade): reproduce the codehash check manually
+- [Support](/support): contact and GitHub
+- [Networks and addresses](/docs/networks-and-addresses): RPC and chain configuration

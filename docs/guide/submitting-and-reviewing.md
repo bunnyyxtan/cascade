@@ -15,7 +15,7 @@ Once a manager has completed their work (and all of their direct children are in
 
 The `deliveryRef` field is a public string stored permanently onchain. It should point to the work you are delivering. Good choices:
 
-- An IPFS CID (e.g. `ipfs://bafybeig...`) — content-addressed, permanent, and verifiable.
+- An IPFS CID (e.g. `ipfs://bafybeig...`): content-addressed, permanent, and verifiable.
 - A URL to a hosted document, report, or codebase.
 - Any reference that the approver can use to verify the outcome.
 
@@ -37,10 +37,10 @@ Click **Approve**. Your wallet signs `approve(id)`. The commitment's full `remai
 
 Click **Reject**. Your wallet signs `reject(id)`. The remaining balance returns to the parent commitment (or to the client's claimable balance if this is a root). The state moves to Failed(Rejected).
 
-There is no partial release — the whole `remaining` is either released to the manager's claimable balance (approve) or returned to the parent's remaining (reject). For a root, rejection returns the remaining directly to the client's claimable balance rather than a parent.
+There is no partial release. The whole `remaining` is either released to the manager's claimable balance (approve) or returned to the parent's remaining (reject). For a root, rejection returns the remaining directly to the client's claimable balance rather than a parent.
 
 ## Related
 
-- [Money flow and reconciliation](/docs/money-flow-and-reconciliation) — where funds go on approve and reject
-- [Claiming USDC](/docs/claiming-usdc) — how to withdraw after approval
-- [States and permissions](/docs/states-and-permissions) — full permission table
+- [Money flow and reconciliation](/docs/money-flow-and-reconciliation): where funds go on approve and reject
+- [Claiming USDC](/docs/claiming-usdc): how to withdraw after approval
+- [States and permissions](/docs/states-and-permissions): full permission table

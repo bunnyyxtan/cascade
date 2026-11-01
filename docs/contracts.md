@@ -1,6 +1,6 @@
 # Contract reference
 
-`contracts/Cascade.sol` — Solidity 0.8.28, compiled with the Cancun EVM target, optimizer runs 200.
+`contracts/Cascade.sol`: Solidity 0.8.28, compiled with the Cancun EVM target, optimizer runs 200.
 
 The contract is immutable. There are no admin keys, no proxy pattern, no protocol fees, no governance, and no upgrade path.
 
@@ -23,8 +23,8 @@ The contract is immutable. There are no admin keys, no proxy pattern, no protoco
 |-------|---------|
 | `Active` (0) | Commitment is open; manager may create children or submit delivery |
 | `Submitted` (1) | Delivery reference recorded; awaiting approver action |
-| `Succeeded` (2) | Terminal — approver approved; USDC credited to claimable |
-| `Failed` (3) | Terminal — rejected, cancelled, or expired; unspent USDC returned to parent |
+| `Succeeded` (2) | Terminal. Approver approved; USDC credited to claimable. |
+| `Failed` (3) | Terminal. Rejected, cancelled, or expired; unspent USDC returned to parent. |
 
 ### `FailReason`
 
@@ -105,7 +105,7 @@ function createChild(
 ) external nonReentrant returns (uint256 id)
 ```
 
-Called by the parent's `manager`. No additional USDC transfer — funds flow via internal accounting only. The new child's `approver` is inherited from the parent.
+Called by the parent's `manager`. No additional USDC transfer; funds flow via internal accounting only. The new child's `approver` is inherited from the parent.
 
 **Reverts:** `CommitmentNotFound`, `NotActive`, `NotManager`, `InvalidAddress`, `InvalidAmount`, `InvalidDeadline`, `DeadlineExceedsParent`, `MaxDepthExceeded`, `MaxChildrenExceeded`, `InsufficientFunds`, `ReservedBudgetViolation`, `DelegationCapacityExceeded`
 
@@ -119,7 +119,7 @@ function submit(uint256 id, string calldata deliveryRef) external
 
 Called by the commitment's `manager`. Records a delivery reference and moves state to `Submitted`. All direct children must be terminal.
 
-**Reverts:** `NotManager`, `NotActive`, `EmptyDeliveryRef`, `DeadlinePassed`, `ChildrenNotTerminal`
+**Reverts:** `CommitmentNotFound`, `NotManager`, `NotActive`, `EmptyDeliveryRef`, `DeadlinePassed`, `ChildrenNotTerminal`
 
 ---
 
@@ -129,9 +129,9 @@ Called by the commitment's `manager`. Records a delivery reference and moves sta
 function approve(uint256 id) external nonReentrant
 ```
 
-Called by the commitment's `approver`. Moves state to `Succeeded` and credits `remaining` to `claimable[manager]`. All direct children must be terminal.
+Called by the commitment's `approver`. Moves state to `Succeeded` and credits `remaining` to `claimable[manager]`. Direct children are already guaranteed terminal because `submit` checked them.
 
-**Reverts:** `NotApprover`, `NotSubmitted`, `ChildrenNotTerminal`
+**Reverts:** `CommitmentNotFound`, `NotApprover`, `NotSubmitted`
 
 ---
 
@@ -143,7 +143,7 @@ function reject(uint256 id) external nonReentrant
 
 Called by the commitment's `approver`. Requires state to be `Submitted`. Moves state to `Failed(Rejected)`. Returns `remaining` to parent.
 
-**Reverts:** `NotApprover`, `NotSubmitted`
+**Reverts:** `CommitmentNotFound`, `NotApprover`, `NotSubmitted`
 
 ---
 
@@ -155,7 +155,7 @@ function cancel(uint256 id) external nonReentrant
 
 Called by the commitment's `approver`. Requires state to be `Active` and all direct children terminal. Moves state to `Failed(Cancelled)`. Returns `remaining` to parent.
 
-**Reverts:** `NotApprover`, `NotActive`, `ChildrenNotTerminal`
+**Reverts:** `CommitmentNotFound`, `NotApprover`, `NotActive`, `ChildrenNotTerminal`
 
 ---
 
@@ -165,9 +165,9 @@ Called by the commitment's `approver`. Requires state to be `Active` and all dir
 function expire(uint256 id) external nonReentrant
 ```
 
-Callable by anyone. Requires `block.timestamp > deadline` and all children terminal. Moves state to `Failed(Expired)`. Returns `remaining` to parent.
+Callable by anyone. Requires `block.timestamp > deadline` and all direct children terminal. Works on both `Active` and `Submitted` commitments; only reverts if the commitment is already terminal. Moves state to `Failed(Expired)`. Returns `remaining` to parent.
 
-**Reverts:** `AlreadyTerminal`, `DeadlineNotExpired`, `ChildrenNotTerminal`
+**Reverts:** `CommitmentNotFound`, `AlreadyTerminal`, `DeadlineNotExpired`, `ChildrenNotTerminal`
 
 ---
 
@@ -187,10 +187,11 @@ Transfers `claimable[msg.sender]` USDC to the caller.
 
 | Function | Returns | Description |
 |----------|---------|-------------|
-| `commitment(uint256 id)` | `Commitment` | Full commitment struct |
-| `children(uint256 id)` | `uint256[]` | Ordered list of child ids |
+| `getCommitment(uint256 id)` | `Commitment` | Full commitment struct |
+| `getChildren(uint256 parentId)` | `uint256[]` | Ordered list of child ids |
 | `nextId()` | `uint256` | Next id to be assigned |
-| `usdc()` | `address` | USDC contract address |
+| `contractBalance()` | `uint256` | USDC balance held by this contract |
+| `usdc()` | `address` | USDC contract address (immutable) |
 | `claimable(address)` | `uint256` | Claimable USDC for an address |
 | `totalEscrowed()` | `uint256` | Sum of all `remaining` |
 | `totalClaimable()` | `uint256` | Sum of all claimable balances |
@@ -231,7 +232,7 @@ usdc.balanceOf(Cascade) >= totalEscrowed + totalClaimable
 
 ### Delegation limit semantics
 
-`root.allocated` tracks **currently exposed capital** — not cumulative historical volume:
+`root.allocated` tracks **currently exposed capital**, not cumulative historical volume:
 
 ```
 root.allocated = live capital inside active/submitted direct children

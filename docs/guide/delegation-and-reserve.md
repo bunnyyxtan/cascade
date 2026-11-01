@@ -2,7 +2,7 @@
 
 ## The delegation limit
 
-When a client creates a root, they set a **delegation limit** — the maximum amount that the root manager may allocate to direct child commitments in total.
+When a client creates a root, they set a **delegation limit**: the maximum amount that the root manager may allocate to direct child commitments in total.
 
 The delegation limit must be less than or equal to the budget. It can be set to `0` (no delegation allowed) or equal to the budget (full delegation allowed).
 
@@ -11,7 +11,7 @@ The delegation limit must be less than or equal to the budget. It can be set to 
 The difference between the budget and the delegation limit is the **protected reserve**:
 
 ```
-reserve = budget − delegationLimit
+reserve = budget - delegationLimit
 ```
 
 The reserve stays at the root and is never exposed to delegation. It is released to the client's claimable balance only when the root itself resolves (whether approved, rejected, cancelled, or expired).
@@ -47,6 +47,6 @@ The delegation limit and the allocation guard (`allocated + amount ≤ delegatio
 
 ## Related
 
-- [Objectives and commitments](/docs/objectives-and-commitments) — tree structure and depth limits
-- [Creating an objective](/docs/creating-an-objective) — setting the budget and delegation limit
-- [States and permissions](/docs/states-and-permissions) — when delegation capacity can be reused
+- [Objectives and commitments](/docs/objectives-and-commitments): tree structure and depth limits
+- [Creating an objective](/docs/creating-an-objective): setting the budget and delegation limit
+- [States and permissions](/docs/states-and-permissions): when delegation capacity can be reused

@@ -17,7 +17,7 @@ git clone https://github.com/bunnyyxtan/cascade.git
 cd cascade
 bun install
 cp .env.example .env
-# Edit .env — fill in VITE_NETWORK, VITE_CASCADE_ADDRESS, etc.
+# Edit .env to fill in VITE_NETWORK, VITE_CASCADE_ADDRESS, etc.
 ```
 
 Foundry libraries are vendored under `lib/forge-std/` (plain directory copy, not a git submodule). No `git submodule update` is required. OpenZeppelin is resolved via `node_modules/@openzeppelin/contracts/` through the remapping in `remappings.txt`.
@@ -48,7 +48,7 @@ bun run build
 
 ```bash
 bun run test
-# 369 tests across 14 suites (vitest)
+# 492 tests across 19 suites (vitest)
 ```
 
 Test files live in `src/test/`. They cover:
@@ -69,6 +69,11 @@ Test files live in `src/test/`. They cover:
 | `docsContent.test.ts` | Docs markdown loading and raw import validation |
 | `linkCrawler.test.tsx` | Dead-link check across all content routes |
 | `rootNav.test.tsx` | Reactive root navigation |
+| `networkDisclosures.test.tsx` | Network disclosure accuracy |
+| `rpcProxy.test.ts` | RPC proxy method allowlist and limits |
+| `createRoot.test.tsx` | CreateRoot contract-verification gate |
+| `createRootGas.test.tsx` | Gas estimation and budget limits |
+| `gasEstimate.test.ts` | Gas estimate hook logic |
 
 ---
 
@@ -83,11 +88,12 @@ Foundry test files:
 
 | File | Coverage |
 |------|----------|
-| `contracts/test/Cascade.t.sol` | 60 unit tests — all write paths, permission guards, accounting |
+| `contracts/test/Cascade.t.sol` | 60 unit tests covering all write paths, permission guards, accounting |
 | `contracts/test/CascadeFuzz.t.sol` | 10 fuzz tests + 6 invariant tests |
-| `contracts/test/CascadeAdversarial.t.sol` | 26 adversarial tests — expiry races, deep trees, 16-child limit, accounting invariants |
+| `contracts/test/CascadeAdversarial.t.sol` | 26 adversarial tests covering expiry races, deep trees, 16-child limit, accounting invariants |
+| `contracts/test/DeployCascadeMainnet.t.sol` | 10 deployment-verification tests against the live mainnet deployment |
 
-Total: **102 tests**.
+Total: **112 tests**.
 
 ---
 
@@ -102,9 +108,9 @@ bun run check:type  # custom typography enforcer (scripts/check-type.ts)
 
 `check:type` enforces three rules across all TSX/CSS source:
 
-1. **SUB12** — no CSS `font-size` below 12px/0.75rem (with documented exceptions for Landing.tsx)
-2. **INLINE** — no `fontSize` key in JSX `style={{ }}` (documented exceptions: Amount.tsx, Landing.tsx, main.tsx)
-3. **LITERAL** — no bare rem/px literals in CSS; must use `var(--text-*)`, `var(--num-*)`, or `var(--fs-*)`
+1. **SUB12**: no CSS `font-size` below 12px/0.75rem (with documented exceptions for Landing.tsx)
+2. **INLINE**: no `fontSize` key in JSX `style={{ }}` (documented exceptions: Amount.tsx, Landing.tsx, main.tsx)
+3. **LITERAL**: no bare rem/px literals in CSS; must use `var(--text-*)`, `var(--num-*)`, or `var(--fs-*)`
 
 ---
 
@@ -141,9 +147,9 @@ The following files are locked. Changes to them require separate explicit review
 
 | File | Reason |
 |------|--------|
-| `contracts/Cascade.sol` | Deployed contract — its bytes feed the codehash |
-| `src/lib/cascadeAbi.ts` | Extracted from compiled artifact — only update via `fetch:abi` |
-| `src/lib/configCheck.ts` | Config verification logic — changes affect write gating |
-| `src/lib/history.ts` | Event store accounting — changes affect activity and outcome display |
-| `src/hooks/useCascadeWrite.ts` | Write hooks — changes affect transaction submission |
+| `contracts/Cascade.sol` | Deployed contract; its bytes feed the codehash |
+| `src/lib/cascadeAbi.ts` | Extracted from compiled artifact; only update via `fetch:abi` |
+| `src/lib/configCheck.ts` | Config verification logic; changes affect write gating |
+| `src/lib/history.ts` | Event store accounting; changes affect activity and outcome display |
+| `src/hooks/useCascadeWrite.ts` | Write hooks; changes affect transaction submission |
 | Financial accounting logic in hooks and `outcome.ts` | Every number shown comes from contract state |

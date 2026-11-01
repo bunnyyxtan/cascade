@@ -22,7 +22,7 @@ export function UsageRisksPage({ onHome }: { onHome: () => void }) {
   return (
     <>
       <PageHead
-        title="Usage & Risks — Cascade"
+        title="Usage & Risks | Cascade"
         description={`What Cascade is, who runs it, and the risks of using smart contract software on ${NETWORK_LABEL}.`}
       />
       <LegalLayout

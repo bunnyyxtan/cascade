@@ -318,7 +318,7 @@ export function FaqPage({ docs, onHome }: Props) {
   return (
     <>
       <PageHead
-        title="FAQ — Cascade"
+        title="FAQ | Cascade"
         description="Frequently asked questions about Cascade: what it is, how the money works, permissions, and safety."
       />
       <DocsLayout slug="faq" title="FAQ" headings={headings} docs={docs} onHome={onHome}>

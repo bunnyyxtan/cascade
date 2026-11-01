@@ -24,8 +24,8 @@ Role assignments are set at commitment creation and cannot be changed.
 
 - USDC is held by the contract, not by any privileged address.
 - A manager can only receive USDC by having a commitment approved.
-- An approver can only move USDC by approving or failing a commitment (funds go to the manager or return to the parent — neither path benefits the approver directly).
-- The client retains the protected reserve (budget − delegationLimit) until the root resolves.
+- An approver can only move USDC by approving or failing a commitment (funds go to the manager or return to the parent; neither path benefits the approver directly).
+- The client retains the protected reserve (budget minus delegationLimit) until the root resolves.
 
 ### What the contract cannot do
 
@@ -71,7 +71,7 @@ The contract operates exclusively in USDC. There are no price feeds, no external
 
 ### Unsolicited token transfers
 
-The balance invariant uses `>=` not `==`. Unsolicited ERC-20 transfers into the contract do not inflate `totalEscrowed` or `totalClaimable`. They are not recoverable (there is no sweep function) — sending unsolicited USDC to this contract loses those funds permanently.
+The balance invariant uses `>=` not `==`. Unsolicited ERC-20 transfers into the contract do not inflate `totalEscrowed` or `totalClaimable`. They are not recoverable (there is no sweep function). Sending unsolicited USDC to this contract loses those funds permanently.
 
 ---
 
@@ -93,7 +93,7 @@ The frontend holds no private keys and no secrets. All signing is delegated to t
 
 ### Arc Studio instrumentation
 
-`src/tracing.ts` and `src/console-capture.ts` are loaded only when the app detects it is running inside an `studio.arc.io` parent frame (checked via `ancestorOrigins` and `document.referrer`). They are not loaded in production deployments. They record RPC calls and console output for developer debugging only — no private keys or seed phrases pass through these paths.
+`src/tracing.ts` and `src/console-capture.ts` are loaded only when the app detects it is running inside an `studio.arc.io` parent frame (checked via `ancestorOrigins` and `document.referrer`). They are not loaded in production deployments. They record RPC calls and console output for developer debugging only; no private keys or seed phrases pass through these paths.
 
 ---
 

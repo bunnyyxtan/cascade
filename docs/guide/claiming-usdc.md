@@ -17,7 +17,7 @@ Any address with a positive `claimable` balance can call `claim`. This includes:
 4. Click **Claim**. Your wallet signs one transaction: `claim()`.
 5. The contract transfers your entire claimable balance to your wallet in a single USDC transfer.
 
-There is no partial claim — `claim` always transfers the full claimable balance.
+There is no partial claim. `claim` always transfers the full claimable balance.
 
 ## The receipt
 
@@ -34,6 +34,6 @@ If a root is rejected, cancelled, or expired, the client's `remaining` (includin
 
 ## Related
 
-- [Money flow and reconciliation](/docs/money-flow-and-reconciliation) — the three balances and invariants
-- [Submitting and reviewing](/docs/submitting-and-reviewing) — approval triggers the claimable credit
-- [Troubleshooting](/docs/troubleshooting) — if your claimable balance looks wrong
+- [Money flow and reconciliation](/docs/money-flow-and-reconciliation): the three balances and invariants
+- [Submitting and reviewing](/docs/submitting-and-reviewing): approval triggers the claimable credit
+- [Troubleshooting](/docs/troubleshooting): if your claimable balance looks wrong

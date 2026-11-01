@@ -33,7 +33,7 @@ export function PrivacyPage({ onHome }: { onHome: () => void }) {
   return (
     <>
       <PageHead
-        title="Privacy — Cascade"
+        title="Privacy | Cascade"
         description="What information Cascade and its third-party services collect when you use the application."
         noIndex
       />

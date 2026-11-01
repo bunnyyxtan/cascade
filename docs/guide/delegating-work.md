@@ -42,6 +42,6 @@ If a child fails (rejected, cancelled, or expired), its unspent remaining return
 
 ## Related
 
-- [Delegation and reserve](/docs/delegation-and-reserve) — limits and the protected reserve
-- [Objectives and commitments](/docs/objectives-and-commitments) — depth and child count rules
-- [Submitting and reviewing](/docs/submitting-and-reviewing) — next step after delegation
+- [Delegation and reserve](/docs/delegation-and-reserve): limits and the protected reserve
+- [Objectives and commitments](/docs/objectives-and-commitments): depth and child count rules
+- [Submitting and reviewing](/docs/submitting-and-reviewing): next step after delegation

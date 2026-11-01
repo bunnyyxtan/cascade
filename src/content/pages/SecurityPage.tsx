@@ -14,7 +14,7 @@ export function SecurityPage({ docs, onHome }: Props) {
   return (
     <>
       <PageHead
-        title="Security — Cascade"
+        title="Security | Cascade"
         description="Security model, trust assumptions, verification, audit status, and how to report a vulnerability."
       />
       <DocsLayout slug="security" title="Security" headings={[

@@ -10,7 +10,7 @@ This is a feature: it means no one can drain funds or alter the rules. It is als
 
 ## No external audit
 
-No external security audit has been completed for V1. The contract has 112 automated tests (60 unit, 10 fuzz, 6 invariant, 26 adversarial) but this does not guarantee the absence of vulnerabilities. See [Security](/security) for current status.
+No external security audit has been completed for V1. The contract has 112 automated tests (60 unit, 10 fuzz, 6 invariant, 26 adversarial, 10 deployment-verification) but this does not guarantee the absence of vulnerabilities. See [Security](/security) for current status.
 
 ## No partial release
 
@@ -46,6 +46,6 @@ The following are not implemented and will not be added without a new contract:
 
 ## Related
 
-- [Security](/security) — responsible disclosure and audit status
-- [Usage & Risks](/usage-risks) — risk disclosure and no-warranty statement
-- [Verifying Cascade](/docs/verifying-cascade) — confirming the deployed bytecode
+- [Security](/security): responsible disclosure and audit status
+- [Usage & Risks](/usage-risks): risk disclosure and no-warranty statement
+- [Verifying Cascade](/docs/verifying-cascade): confirming the deployed bytecode

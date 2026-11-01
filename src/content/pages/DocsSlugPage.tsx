@@ -30,7 +30,7 @@ export function DocsSlugPage({ slug, docs, onHome }: Props) {
 
   return (
     <>
-      <PageHead title={`${entry.title} — Cascade Docs`} description={entry.description} />
+      <PageHead title={`${entry.title} | Cascade`} description={entry.description} />
       <DocsLayout slug={slug} title={entry.title} headings={headings} docs={docs} onHome={onHome}>
         <MarkdownBody md={md} />
       </DocsLayout>

@@ -3,7 +3,7 @@
  * Replaces the full SiteFooter on content pages.
  * All layout is inline styles to avoid class-inheritance issues.
  */
-import { Github, AlertCircle } from 'lucide-react'
+import { AlertCircle } from 'lucide-react'
 import { CONTACT_MAILTO, CONTACT_EMAIL, isPublished } from '@/content/site'
 
 const CURRENT_YEAR = new Date().getFullYear()
@@ -15,20 +15,7 @@ const TEXT_LINK  = 'var(--ok,       #27744E)'
 const BORDER_CLR = 'var(--line,     #E3E6DD)'
 const TEXT_MAIN  = 'var(--ink,      #151714)'
 
-interface DocsFooterProps {
-  /** slug of the current article (used to build GitHub edit URL). Omit on index. */
-  slug?: string
-  /** Whether this is a guide article (docs/guide/) vs a dev-ref (docs/*.md) */
-  isGuide?: boolean
-}
-
-export function DocsFooter({ slug, isGuide = true }: DocsFooterProps) {
-  // Build GitHub "edit this page" URL
-  const ghEditBase = `${REPO}/blob/main/docs`
-  const ghEditUrl = slug
-    ? `${ghEditBase}/${isGuide ? 'guide/' : ''}${slug}.md`
-    : null
-
+export function DocsFooter() {
   const linkStyle: React.CSSProperties = {
     color: TEXT_LINK,
     textDecoration: 'none',
@@ -57,24 +44,10 @@ export function DocsFooter({ slug, isGuide = true }: DocsFooterProps) {
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between',
         flexWrap: 'wrap',
         gap: 16,
         marginBottom: 24,
       }}>
-        {/* Edit on GitHub */}
-        {ghEditUrl && (
-          <a
-            href={ghEditUrl}
-            target="_blank"
-            rel="noreferrer"
-            style={linkStyle}
-          >
-            <Github size={14} aria-hidden />
-            Edit this page
-          </a>
-        )}
-
         {/* Report a problem */}
         <a
           href={`${CONTACT_MAILTO}?subject=Docs%20feedback`}

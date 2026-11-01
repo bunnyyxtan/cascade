@@ -12,11 +12,11 @@ Browser
   │
   └── App shell (wallet connected)
         AppShell.tsx
-          ├── Explore.tsx        — commitment list, search, filter
-          ├── CommitmentWorkspace.tsx — tree, inspector, actions
-          ├── CreateRoot.tsx     — approve + createRoot two-step
-          ├── Activity.tsx       — global event feed
-          └── Claimable view     — USDC balance + claim history
+          ├── Explore.tsx        (commitment list, search, filter)
+          ├── CommitmentWorkspace.tsx (tree, inspector, actions)
+          ├── CreateRoot.tsx     (approve + createRoot two-step)
+          ├── Activity.tsx       (global event feed)
+          └── Claimable view     (USDC balance + claim history)
                 │
                 │  wagmi / viem  (read: eth_call, eth_getLogs)
                 │               (write: eth_sendTransaction)
@@ -56,14 +56,14 @@ Browser
 
 | File | Purpose |
 |------|---------|
-| `src/lib/cascadeAbi.ts` | ABI extracted from compiled artifact — source of truth for viem calls |
+| `src/lib/cascadeAbi.ts` | ABI extracted from compiled artifact; source of truth for viem calls |
 | `src/lib/contracts.ts` | Contract address, chain, explorer URL helpers |
 | `src/lib/network.ts` | Active network (VITE_NETWORK), CHAIN object, RPC URL |
 | `src/lib/configCheck.ts` | Startup verification singleton (codehash + USDC address) |
 | `src/lib/history.ts` | Chunked `eth_getLogs` event store, localStorage cache, 15 s poll |
 | `src/lib/types.ts` | TypeScript mirrors of contract structs and enums |
 | `src/lib/format.ts` | USDC formatting, address shortening, deadline helpers |
-| `src/lib/outcome.ts` | Pure `computeOutcome` — maps event history to per-node outcome lines |
+| `src/lib/outcome.ts` | Pure `computeOutcome`: maps event history to per-node outcome lines |
 | `src/lib/status.ts` | Commitment status classification helpers |
 | `src/lib/toast.ts` | Sonner toast helpers |
 
@@ -144,9 +144,9 @@ The balance check is `>=` not `==`: unsolicited ERC-20 transfers into the contra
 
 Before any write is allowed, the frontend calls three read methods against the configured RPC:
 
-1. `eth_chainId` — must match `CHAIN_ID`
-2. `eth_getCode(CASCADE_ADDRESS)` — `keccak256` of the result must match `VITE_CASCADE_CODEHASH`
-3. `Cascade.usdc()` — must return `0x3600000000000000000000000000000000000000`
+1. `eth_chainId`: must match `CHAIN_ID`
+2. `eth_getCode(CASCADE_ADDRESS)`: `keccak256` of the result must match `VITE_CASCADE_CODEHASH`
+3. `Cascade.usdc()`: must return `0x3600000000000000000000000000000000000000`
 
 All three checks are managed by the `configCheck` singleton (`src/lib/configCheck.ts`). Writes are gated in `WalletGate` until `status === 'ok'`. If `VITE_CASCADE_CODEHASH` is absent the status is `'unverified'` and writes are permanently blocked.
 

@@ -14,7 +14,7 @@ export function SupportPage({ docs, onHome }: Props) {
   return (
     <>
       <PageHead
-        title="Support — Cascade"
+        title="Support | Cascade"
         description="Get help with Cascade: contact, self-help guides, and GitHub."
       />
       <DocsLayout slug="faq" title="Support" headings={[

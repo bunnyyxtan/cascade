@@ -77,6 +77,6 @@ The hash should match `0xdae313ed3e636b9ee2cc0067af1a501ad8128e031a2d23b5f2d5e78
 
 ## Related
 
-- [Networks and addresses](/docs/networks-and-addresses) — full deployment table
-- [Security](/security) — audit status and known limitations
-- [Limitations](/docs/limitations) — what the contract cannot do
+- [Networks and addresses](/docs/networks-and-addresses): full deployment table
+- [Security](/security): audit status and known limitations
+- [Limitations](/docs/limitations): what the contract cannot do

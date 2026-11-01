@@ -243,3 +243,78 @@ describe('Router: hash routes unaffected', () => {
     expect(parsePathname('/')).toBeNull()
   })
 })
+
+describe('Browser tab titles', () => {
+  beforeEach(() => {
+    document.title = 'Cascade'
+    cleanup()
+  })
+
+  it('/docs sets title "Documentation | Cascade"', () => {
+    setPath('/docs')
+    render(<ContentApp />)
+    expect(document.title).toBe('Documentation | Cascade')
+  })
+
+  it('/docs/overview sets title "Overview | Cascade"', () => {
+    setPath('/docs/overview')
+    render(<ContentApp />)
+    expect(document.title).toBe('Overview | Cascade')
+  })
+
+  it('/docs/quick-start sets title "Quick start | Cascade"', () => {
+    setPath('/docs/quick-start')
+    render(<ContentApp />)
+    expect(document.title).toBe('Quick start | Cascade')
+  })
+
+  it('/security sets title "Security | Cascade"', () => {
+    setPath('/security')
+    render(<ContentApp />)
+    expect(document.title).toBe('Security | Cascade')
+  })
+
+  it('/faq sets title "FAQ | Cascade"', () => {
+    setPath('/faq')
+    render(<ContentApp />)
+    expect(document.title).toBe('FAQ | Cascade')
+  })
+
+  it('/support sets title "Support | Cascade"', () => {
+    setPath('/support')
+    render(<ContentApp />)
+    expect(document.title).toBe('Support | Cascade')
+  })
+
+  it('/usage-risks sets title "Usage & Risks | Cascade"', () => {
+    setPath('/usage-risks')
+    render(<ContentApp />)
+    expect(document.title).toBe('Usage & Risks | Cascade')
+  })
+
+  it('title never contains an em dash', () => {
+    const routes = ['/docs', '/docs/overview', '/security', '/faq', '/support', '/usage-risks']
+    for (const path of routes) {
+      cleanup()
+      document.title = 'Cascade'
+      setPath(path)
+      render(<ContentApp />)
+      expect(document.title).not.toContain('\u2014')
+    }
+  })
+
+  it('all doc titles use "| Cascade" suffix (not em dash)', () => {
+    const routes = ['/docs', '/docs/overview', '/security', '/faq', '/support', '/usage-risks']
+    for (const path of routes) {
+      cleanup()
+      document.title = 'Cascade'
+      setPath(path)
+      render(<ContentApp />)
+      const t = document.title
+      // Either the homepage bare title, or must end with "| Cascade"
+      if (t !== 'Cascade') {
+        expect(t).toMatch(/\| Cascade$/)
+      }
+    }
+  })
+})

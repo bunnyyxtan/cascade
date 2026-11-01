@@ -1,4 +1,4 @@
-# Cascade V1 — Arc Mainnet Deployment Guide
+# Cascade V1: Arc Mainnet Deployment Guide
 
 > **The contract is immutable and has not been audited by an independent security firm.**
 > Review all steps carefully. Real USDC is spent. Actions cannot be undone.
@@ -14,7 +14,7 @@
 | Explorer | `https://explorer.arc.io` | Arc documentation |
 | USDC ERC-20 | `0x3600000000000000000000000000000000000000` | `decimals()` → 6, `name()` → "USDC" confirmed live |
 | USDC decimals | 6 | Live RPC call confirmed |
-| Gas token | Native USDC (18-decimal view) | Arc documentation — same pool, different decimal precision |
+| Gas token | Native USDC (18-decimal view) | Arc documentation (same pool, different decimal precision) |
 
 > **Arc native gas note:** On Arc, native gas and ERC-20 USDC are the same asset exposed two ways.
 > The contract uses 6-decimal ERC-20 USDC exclusively and never touches `msg.value`.
@@ -51,7 +51,7 @@ forge build
 # Confirm the artifact exists and note the bytecode length
 forge inspect Cascade bytecode | wc -c   # creation bytecode length in hex chars
 
-# Compute keccak256 of the deployed (runtime) bytecode artifact — compare after deployment
+# Compute keccak256 of the deployed (runtime) bytecode artifact; compare after deployment
 cast keccak $(forge inspect Cascade deployedBytecode)
 ```
 
@@ -66,7 +66,7 @@ the current `contracts/Cascade.sol` source before deployment.
 forge test -vv
 ```
 
-Expected: **102 tests pass** (60 unit + 26 adversarial + 10 fuzz + 6 invariant).
+Expected: **112 tests pass** (60 unit + 26 adversarial + 10 fuzz + 6 invariant + 10 deployment-verification).
 Do not deploy if any test fails.
 
 ---
@@ -134,7 +134,7 @@ forge script contracts/script/DeployCascadeMainnet.s.sol \
   -vvvv
 ```
 
-Wait for the transaction to be included in a block. Arc has sub-second finality —
+Wait for the transaction to be included in a block. Arc has sub-second finality;
 confirmation is nearly instant.
 
 ---
@@ -149,7 +149,7 @@ VITE_CASCADE_ADDRESS=0x<deployed address>
 VITE_CASCADE_DEPLOY_BLOCK=<block number from receipt>
 ```
 
-Compute the runtime codehash (keccak256 of the deployed bytecode — this is what
+Compute the runtime codehash (keccak256 of the deployed bytecode; this is what
 `VITE_CASCADE_CODEHASH` and the frontend's fail-closed check both use):
 
 ```bash
@@ -199,7 +199,7 @@ In the Vercel dashboard for `arc-studio-e23c745a31a74c88a93e7f30.vercel.app`:
 | `VITE_CASCADE_DEPLOY_BLOCK` | `<actual deployment block>` |
 | `VITE_CASCADE_CODEHASH` | `0x<runtime keccak256>` |
 
-3. Do **not** set `VITE_RPC_PROXY_BASE_URL` or `VITE_RPC_PROXY_TOKEN` — these are Arc Studio only
+3. Do **not** set `VITE_RPC_PROXY_BASE_URL` or `VITE_RPC_PROXY_TOKEN` (these are Arc Studio only)
 4. Redeploy from the Vercel dashboard (or trigger via Arc Studio)
 
 ---
@@ -267,14 +267,14 @@ first and confirm the output matches expected values.
 ### M-02: Permissionless expiry racing approved submissions
 
 Any address can expire a submitted commitment once the deadline passes.
-A third party gains no USDC from doing so — the refund goes to the client.
+A third party gains no USDC from doing so; the refund goes to the client.
 See `docs/security-review.md` for full analysis and adversarial test results.
 
 **Decision:** Accept. Tested and documented. No contract change required.
 
 ### No independent audit
 
-The contract has 102 automated tests but has not been reviewed by an
+The contract has 112 automated tests but has not been reviewed by an
 independent security firm. Use amounts proportional to this risk.
 
 ---

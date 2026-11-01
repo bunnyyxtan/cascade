@@ -10,7 +10,7 @@
 Mainnet deploy tx: `0xc6cb7ec3a2d6727da67e991da22790b7df77a154a83ad4ddaf008cc7ff945c21`
 Testnet deploy tx: `0x0e07a498c287e26481ea5150968741dea3210e2ad1c0a552bcd15f508fa82a6a`
 
-Runtime codehash (keccak256 of deployed bytecode — identical on both networks):
+Runtime codehash (keccak256 of deployed bytecode, identical on both networks):
 `0xdae313ed3e636b9ee2cc0067af1a501ad8128e031a2d23b5f2d5e78ae1cd8e29`
 
 ---

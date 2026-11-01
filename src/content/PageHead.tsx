@@ -7,7 +7,7 @@ import { useEffect } from 'react'
 const SITE_URL = import.meta.env.VITE_SITE_URL as string | undefined
 
 interface PageHeadProps {
-  title: string          // "Page — Cascade"
+  title: string          // "Page | Cascade" or "Cascade" for the homepage
   description?: string
   noIndex?: boolean      // draft legal pages
 }

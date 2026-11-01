@@ -6,7 +6,7 @@ Every funded unit of work in Cascade is a **commitment**. A commitment at the to
 
 A **root commitment** is created by a client who transfers USDC into escrow. The client becomes the root's approver. The client appoints a manager, who is responsible for delivering the work.
 
-A **child commitment** is created by the parent's manager, allocating a portion of the parent's remaining budget. No additional USDC transfer occurs — funds move by internal accounting only. The child's approver is inherited from the parent's manager (the person who created it).
+A **child commitment** is created by the parent's manager, allocating a portion of the parent's remaining budget. No additional USDC transfer occurs; funds move by internal accounting only. The child's approver is inherited from the parent's manager (the person who created it).
 
 ## Tree limits
 
@@ -30,10 +30,10 @@ Each commitment moves through the following states:
 
 | State | Meaning |
 |-------|---------|
-| **Active** | Open — manager may create children or submit delivery |
-| **Submitted** | Delivery reference recorded, awaiting approver action |
-| **Succeeded** | Terminal — approver approved, USDC credited to manager |
-| **Failed** | Terminal — rejected, cancelled, or expired |
+| **Active** | Open. Manager may create children or submit delivery. |
+| **Submitted** | Delivery reference recorded, awaiting approver action. |
+| **Succeeded** | Terminal. Approver approved; USDC credited to manager. |
+| **Failed** | Terminal. Rejected, cancelled, or expired. |
 
 Terminal states are final. No commitment can move backwards.
 
@@ -48,6 +48,6 @@ Alice (client) creates a root with a 10 USDC budget, a 7 USDC delegation limit, 
 
 ## Related
 
-- [Delegation and reserve](/docs/delegation-and-reserve) — how the delegation limit and reserve work
-- [States and permissions](/docs/states-and-permissions) — the full state machine and permission table
-- [Money flow and reconciliation](/docs/money-flow-and-reconciliation) — where USDC goes on each outcome
+- [Delegation and reserve](/docs/delegation-and-reserve): how the delegation limit and reserve work
+- [States and permissions](/docs/states-and-permissions): the full state machine and permission table
+- [Money flow and reconciliation](/docs/money-flow-and-reconciliation): where USDC goes on each outcome

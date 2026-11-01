@@ -22,7 +22,7 @@ export function DocsIndexPage({ docs, onHome }: Props) {
   return (
     <>
       <PageHead
-        title="Documentation — Cascade"
+        title="Documentation | Cascade"
         description="Learn how Cascade works: quick start, core concepts, usage guides and developer reference."
       />
       <DocsLayout slug="overview" title="Documentation" headings={[]} docs={docs} onHome={onHome}>

@@ -183,10 +183,7 @@ export function DocsLayout({ slug, title, headings, docs, children, onHome }: Do
       </div>
       {/* Docs footer — compact, no full site footer */}
       <div style={{ maxWidth: 720, margin: '0 auto', padding: '0 40px' }}>
-        <DocsFooter
-          slug={slug !== 'overview' ? slug : undefined}
-          isGuide={DOCS_ENTRIES.find(e => e.slug === slug)?.section !== 'For developers'}
-        />
+        <DocsFooter />
       </div>
     </div>
   )

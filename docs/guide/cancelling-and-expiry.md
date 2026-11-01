@@ -7,7 +7,7 @@ Commitments can end without approval in two ways: **cancellation** (approver-ini
 The approver can cancel an Active commitment at any time, provided all direct children are terminal.
 
 - Who: the commitment's **approver**.
-- State: **Active** (not Submitted — use reject for a Submitted commitment).
+- State: **Active** (not Submitted; use reject for a Submitted commitment).
 - Condition: all direct children must be terminal.
 - Result: the commitment moves to Failed(Cancelled). The remaining balance returns to the parent's remaining (or to the client's claimable if this is a root).
 
@@ -15,10 +15,10 @@ To cancel a commitment that has active children, cancel or expire the children f
 
 ## Expiry
 
-After the deadline passes, any address (including bots) can call `expire(id)` on an Active commitment whose direct children are all terminal.
+After the deadline passes, any address (including bots) can call `expire(id)` on a commitment whose direct children are all terminal.
 
 - Who: **anyone**.
-- State: **Active**.
+- State: **Active or Submitted** (the contract only rejects calls on already-terminal commitments).
 - Condition: `block.timestamp > deadline` AND all direct children terminal.
 - Result: Failed(Expired). Same fund return path as cancellation.
 
@@ -39,10 +39,10 @@ When a commitment fails (by any reason):
 - A **child's** remaining returns to its parent's `remaining`, where it can be re-delegated or remain reserved.
 - A **root's** remaining goes to the **client's** claimable balance.
 
-Already-settled descendants are not affected — an approved child's manager keeps their USDC even if the root later fails.
+Already-settled descendants are not affected. An approved child's manager keeps their USDC even if the root later fails.
 
 ## Related
 
-- [States and permissions](/docs/states-and-permissions) — full permission table
-- [Money flow and reconciliation](/docs/money-flow-and-reconciliation) — what happens to funds on failure
-- [Claiming USDC](/docs/claiming-usdc) — withdrawing after a root failure
+- [States and permissions](/docs/states-and-permissions): full permission table
+- [Money flow and reconciliation](/docs/money-flow-and-reconciliation): what happens to funds on failure
+- [Claiming USDC](/docs/claiming-usdc): withdrawing after a root failure

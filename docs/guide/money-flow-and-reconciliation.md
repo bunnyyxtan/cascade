@@ -18,7 +18,7 @@ totalClaimable == Σ claimable[address]         (for all addresses)
 contract USDC balance >= totalEscrowed + totalClaimable
 ```
 
-The third invariant (`>=` not `==`) allows for unsolicited ERC-20 transfers, but those funds are permanently unrecoverable — there is no sweep function.
+The third invariant (`>=` not `==`) allows for unsolicited ERC-20 transfers, but those funds are permanently unrecoverable. There is no sweep function.
 
 ## What happens on each outcome
 
@@ -72,6 +72,6 @@ The sum of all three equals the total USDC ever deposited, since no funds disapp
 
 ## Related
 
-- [Claiming USDC](/docs/claiming-usdc) — how to pull out your claimable balance
-- [States and permissions](/docs/states-and-permissions) — full permission table
-- [Delegation and reserve](/docs/delegation-and-reserve) — the protected reserve
+- [Claiming USDC](/docs/claiming-usdc): how to pull out your claimable balance
+- [States and permissions](/docs/states-and-permissions): full permission table
+- [Delegation and reserve](/docs/delegation-and-reserve): the protected reserve
