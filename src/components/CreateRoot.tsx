@@ -7,7 +7,7 @@
  * Layout: 12-col grid. Form (7 col) left, sticky EscrowSummary (5 col) right.
  * ≤1024px: single column, summary between form actions and the card bottom.
  */
-import { useState, useId } from 'react'
+import { useState, useId, useRef, useEffect } from 'react'
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import { erc20Abi, parseEventLogs } from 'viem'
 import { isAddress } from 'viem'
@@ -19,6 +19,7 @@ import { CASCADE_ADDRESS, USDC_ADDRESS, TARGET_CHAIN_ID } from '@/lib/contracts'
 import { cascadeAbi } from '@/lib/cascadeAbi'
 import { useUsdcBalance, useUsdcAllowance } from '@/hooks/useUsdcBalance'
 import { useSuccessOnce } from '@/hooks/useCascadeWrite'
+import { useGasEstimate, useEstimateApproveGas, useEstimateCreateGas, nativeGasCostToUsdc, APPROVE_GAS_UNITS, CREATE_GAS_UNITS } from '@/hooks/useGasEstimate'
 import { triggerRefetch } from '@/lib/history'
 import { IS_MAINNET, NETWORK_LABEL } from '@/lib/network'
 import { useConfigCheck, EXPECTED_CONFIG_KEY } from '@/lib/configCheck'
@@ -208,6 +209,8 @@ interface SummaryProps {
   parsedDelegation: bigint | undefined
   reservedBudget:   bigint | undefined
   balance:          bigint | undefined
+  /** Spendable balance after subtracting gas reserve. undefined when balance or fees not yet loaded. */
+  spendableBalance: bigint | undefined
   manager:          string
   deadlineTs:       bigint | undefined
   deadlineInput:    string
@@ -242,7 +245,7 @@ interface SummaryProps {
 
 function EscrowSummary(p: SummaryProps) {
   const {
-    parsedAmount, parsedDelegation, reservedBudget, balance, manager,
+    parsedAmount, parsedDelegation, reservedBudget, balance, spendableBalance, manager,
     deadlineTs, needsApproval, formValid, firstUnmetReason,
     isConnected, isWrongChain, configOk, reviewing, onReview, onCancelReview, onConfirm,
     approvePending, approveConfirming, approveSuccess, approveError, approveErr, approveHash, resetApprove,
@@ -253,8 +256,10 @@ function EscrowSummary(p: SummaryProps) {
   const fmtAmt   = parsedAmount     !== undefined ? `${formatUsdc(parsedAmount)} USDC`     : '—'
   const fmtDeleg = parsedDelegation !== undefined ? `${formatUsdc(parsedDelegation)} USDC`  : '—'
   const fmtRes   = reservedBudget   !== undefined ? `${formatUsdc(reservedBudget)} USDC`    : '—'
-  const afterBal = (balance !== undefined && parsedAmount !== undefined && parsedAmount <= balance)
-    ? `${formatUsdc(balance - parsedAmount)} USDC`
+  // afterBal uses spendableBalance (post-gas-reserve) when available, falls back to raw balance.
+  const afterBase = spendableBalance ?? balance
+  const afterBal  = (afterBase !== undefined && parsedAmount !== undefined && parsedAmount <= afterBase)
+    ? `${formatUsdc(afterBase - parsedAmount)} USDC`
     : '—'
   const dlStr    = deadlineTs
     ? new Date(Number(deadlineTs) * 1000).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
@@ -431,28 +436,133 @@ export function CreateRoot({ onNavigate }: Props) {
   const deadlineTs       = deadlineInput ? BigInt(Math.floor(new Date(deadlineInput).getTime() / 1000)) : undefined
   const needsApproval    = parsedAmount !== undefined && (allowance === undefined || allowance < parsedAmount)
 
-  /* Errors — UNCHANGED */
+  // ── Gas fee estimation ───────────────────────────────────────────────────────
+  //
+  // Two-layer strategy:
+  //
+  // Layer 1 — useEstimateFeesPerGas (always running):
+  //   Returns maxFeePerGas for the current chain. Used to convert gas units
+  //   into USDC cost. Also used for heuristic twoTxReserve / oneTxReserve.
+  //
+  // Layer 2 — per-call eth_estimateGas (enabled when args are complete):
+  //   Simulates the actual approve / createRoot calldata with the sender's
+  //   account. Returns the EVM-simulated gas units with a 25% safety margin.
+  //   Falls back to the heuristic constants when unavailable.
+  //
+  // Reserve selection for Max / spendableBalance (circular-dependency fix):
+  //   We must choose a reserve before parsedAmount is known (amount field empty).
+  //   Use the two-tx reserve (conservative) when allowance may be insufficient
+  //   for any full-balance amount (allowance < balance or unknown). Only use
+  //   the one-tx reserve when the existing allowance covers the full balance.
+  const { maxFeePerGas, twoTxReserve, oneTxReserve, isLoading: gasLoading, isError: gasError, refetch: refetchGas } = useGasEstimate()
+
+  // Per-call simulated gas units for approve (enabled when account + amount available)
+  const { gasUnits: approveGasUnits } = useEstimateApproveGas(address, parsedAmount)
+
+  // Per-call simulated gas units for createRoot (enabled when all form args valid)
+  const { gasUnits: createGasUnits, isError: createGasError } = useEstimateCreateGas(
+    address, manager, parsedAmount, parsedDelegation, deadlineTs, title,
+  )
+
+  // Resolve effective gas units: per-call simulation if available, heuristic fallback.
+  // Per-call is preferred because it accounts for actual calldata and storage state.
+  const effectiveApproveUnits: bigint = approveGasUnits ?? APPROVE_GAS_UNITS
+  const effectiveCreateUnits:  bigint = createGasUnits  ?? CREATE_GAS_UNITS
+
+  // USDC cost of each transaction leg using effective units × current maxFeePerGas.
+  // undefined when maxFeePerGas is not yet available.
+  const approveGasUsdc: bigint | undefined = maxFeePerGas !== undefined
+    ? nativeGasCostToUsdc(effectiveApproveUnits, maxFeePerGas)
+    : undefined
+  const createGasUsdc: bigint | undefined = maxFeePerGas !== undefined
+    ? nativeGasCostToUsdc(effectiveCreateUnits, maxFeePerGas)
+    : undefined
+
+  // Whether per-call simulation is available for the create leg.
+  // Used to decide whether to block manual submission on gasError.
+  const createGasKnown = createGasUnits !== undefined && !createGasError
+
+  // Reserve for Max / spendableBalance: conservative (two-tx) unless we know
+  // the current allowance already covers the full balance.
+  const allowanceCoversFull = allowance !== undefined && balance !== undefined && allowance >= balance
+
+  // maxReserve: the reserve used for Max button and spendableBalance display.
+  // Uses per-call estimates when both legs are available, falls back to heuristics.
+  const maxReserve: bigint | undefined = (() => {
+    if (maxFeePerGas === undefined) return undefined
+    if (allowanceCoversFull) {
+      // No approval needed for any amount ≤ balance: one-tx reserve only.
+      return createGasUsdc ?? oneTxReserve
+    }
+    // Two-tx reserve: approve + create.
+    const approveUsdc = approveGasUsdc ?? (twoTxReserve !== undefined && oneTxReserve !== undefined ? twoTxReserve - oneTxReserve : undefined)
+    const createUsdc  = createGasUsdc ?? oneTxReserve
+    if (approveUsdc !== undefined && createUsdc !== undefined) return approveUsdc + createUsdc
+    return twoTxReserve
+  })()
+
+  // gasReserve for inline validation: matches the actual transaction path for parsedAmount.
+  const gasReserve: bigint | undefined = (() => {
+    if (maxFeePerGas === undefined) return undefined
+    if (needsApproval) {
+      const approveUsdc = approveGasUsdc ?? (twoTxReserve !== undefined && oneTxReserve !== undefined ? twoTxReserve - oneTxReserve : undefined)
+      const createUsdc  = createGasUsdc ?? oneTxReserve
+      if (approveUsdc !== undefined && createUsdc !== undefined) return approveUsdc + createUsdc
+      return twoTxReserve
+    }
+    return createGasUsdc ?? oneTxReserve
+  })()
+
+  // spendableBalance = balance minus maxReserve, clamped to 0n.
+  // undefined when either balance or fee estimate is unavailable.
+  // No raw-balance fallback: if fees are unknown, we refuse to guess.
+  const spendableBalance: bigint | undefined = (balance !== undefined && maxReserve !== undefined)
+    ? (balance > maxReserve ? balance - maxReserve : 0n)
+    : undefined
+
+  /* Errors */
   const errTitle    = touched.title    && !title.trim()                              ? 'Title is required' : ''
   const errManager  = touched.manager  && manager && !isAddress(manager)            ? 'Must be a valid 0x address' : ''
-  const errAmount   = touched.amount   && parsedAmount !== undefined && balance !== undefined && parsedAmount > balance
-    ? `Insufficient balance (you have ${formatUsdc(balance)} USDC)` : ''
+  const errAmount   = touched.amount   && parsedAmount !== undefined
+    ? balance !== undefined && parsedAmount > balance
+      ? `Insufficient balance (you have ${formatUsdc(balance)} USDC)`
+      : spendableBalance !== undefined && parsedAmount > spendableBalance
+        ? `Insufficient USDC for gas (need ~${formatUsdc(gasReserve)} USDC for fees)`
+        : ''
+    : ''
   const errDeleg    = touched.deleg    && parsedDelegation !== undefined && parsedAmount !== undefined && parsedDelegation > parsedAmount
     ? 'Cannot exceed total budget' : ''
   const errDeadline = touched.deadline && deadlineTs !== undefined && isPast(deadlineTs)
     ? 'Must be in the future' : ''
 
-  // ── Approve tx — UNCHANGED ──────────────────────────────────────────────────
+  // ── Approve tx ──────────────────────────────────────────────────────────────
   const { writeContract: approveWrite, data: approveHash, isPending: approvePending, isError: approveError, error: approveErr, reset: resetApprove } = useWriteContract()
   const { isLoading: approveConfirming, isSuccess: approveSuccess } = useWaitForTransactionReceipt({ hash: approveHash, chainId: TARGET_CHAIN_ID })
 
-  // ── CreateRoot tx — UNCHANGED ───────────────────────────────────────────────
+  // ── CreateRoot tx ────────────────────────────────────────────────────────────
   const { writeContract: createWrite, data: createHash, isPending: createPending, isError: createErrored, error: createErr, reset: resetCreate } = useWriteContract()
   const { isLoading: createConfirming, isSuccess: createSuccess, data: createReceipt } = useWaitForTransactionReceipt({ hash: createHash, chainId: TARGET_CHAIN_ID })
+
+  // ── Approver address ref — captures address and form snapshot at approve time ─
+  // Guards createRoot against wallet account switches and form changes between
+  // approval confirmation and the auto-advance to createRoot.
+  const approverAddressRef = useRef<`0x${string}` | undefined>(undefined)
+
+  // Snapshot of form values at the time handleApprove was called. The auto-
+  // advance compares the current form state to this snapshot so that a changed
+  // amount, manager, deadline, or title after approval doesn't silently create
+  // a root with different parameters than the user approved the USDC spend for.
+  interface FormSnapshot { amount: bigint; manager: string; delegation: bigint; deadline: bigint; title: string }
+  const approveSnapshotRef = useRef<FormSnapshot | undefined>(undefined)
 
   const invalidateCommitments = useInvalidateCommitment()
   const invalidateBalance     = useInvalidateUsdcBalance()
 
-  // ── useSuccessOnce callbacks — UNCHANGED ────────────────────────────────────
+  // ── Approve success callback ─────────────────────────────────────────────────
+  // Refetch allowance immediately after confirmation. The auto-advance useEffect
+  // below watches the updated `allowance` value and only fires createRoot once
+  // the fresh allowance confirms sufficiency — fixing the async race where
+  // allowance hasn't resolved yet when auto-advance triggers.
   useSuccessOnce(approveSuccess, approveHash, () => {
     void refetchAllowance()
     invalidateBalance()
@@ -480,17 +590,60 @@ export function CreateRoot({ onNavigate }: Props) {
     deadlineTs !== undefined && deadlineTs > 0n &&
     title.trim().length > 0
 
-  // ── handleApprove — UNCHANGED ───────────────────────────────────────────────
-  // File: src/components/CreateRoot.tsx:280
+  // ── handleApprove ────────────────────────────────────────────────────────────
   function handleApprove() {
-    if (!parsedAmount) return
+    if (!parsedAmount || parsedDelegation === undefined || !deadlineTs || !isAddress(manager)) return
+    // Record address and form snapshot so the auto-advance and handleCreate
+    // can verify nothing changed between the approval and creation steps.
+    approverAddressRef.current = address
+    approveSnapshotRef.current = {
+      amount:     parsedAmount,
+      manager,
+      delegation: parsedDelegation,
+      deadline:   deadlineTs,
+      title:      title.trim(),
+    }
     approveWrite({ address: USDC_ADDRESS, abi: erc20Abi, functionName: 'approve', args: [CASCADE_ADDRESS as `0x${string}`, parsedAmount], chainId: TARGET_CHAIN_ID })
   }
 
-  // ── handleCreate — UNCHANGED ────────────────────────────────────────────────
-  // File: src/components/CreateRoot.tsx:287
+  // ── handleCreate ─────────────────────────────────────────────────────────────
   function handleCreate() {
     if (!parsedAmount || parsedDelegation === undefined || !deadlineTs || !isAddress(manager)) return
+
+    // Pre-submission guard: revalidate wallet and chain state.
+    if (!isConnected || wrongChain || !configOk) return
+    if (!address) return
+
+    // Approver address check: only applies when an approval was submitted in
+    // this session (approveHash is set). Allows direct creation with pre-existing
+    // allowance (handleApprove never called) without restriction.
+    if (approveHash !== undefined && address !== approverAddressRef.current) return
+
+    // Form snapshot check: if an approval was submitted, verify the form values
+    // haven't changed since — prevents silently creating with stale args.
+    if (approveHash !== undefined && approveSnapshotRef.current !== undefined) {
+      const s = approveSnapshotRef.current
+      if (
+        s.amount     !== parsedAmount     ||
+        s.manager    !== manager          ||
+        s.delegation !== parsedDelegation ||
+        s.deadline   !== deadlineTs       ||
+        s.title      !== title.trim()
+      ) return
+    }
+
+    // Verify the current allowance is sufficient. After an approve, the
+    // allowance is refetched before this can fire (via useSuccessOnce +
+    // the useEffect auto-advance that watches the updated allowance value).
+    if (allowance === undefined || allowance < parsedAmount) return
+
+    // Gas sufficiency check: when fee estimation failed AND per-call
+    // simulation is also unavailable, we cannot verify the user has enough
+    // for gas. Fail closed rather than submitting a likely-failing tx.
+    // Exception: if the create-gas simulation succeeded, we have a good
+    // estimate even without the global fee estimate.
+    if (gasError && !createGasKnown) return
+
     createWrite({ address: CASCADE_ADDRESS as `0x${string}`, abi: cascadeAbi, functionName: 'createRoot', args: [manager, parsedAmount, parsedDelegation, deadlineTs, title.trim()], chainId: TARGET_CHAIN_ID })
   }
 
@@ -504,8 +657,11 @@ export function CreateRoot({ onNavigate }: Props) {
     ? 'Enter a valid 0x manager address'
     : !parsedAmount || parsedAmount === 0n
     ? 'Enter a budget greater than zero'
+    // Hard balance check first, then gas-reserve check.
     : balance !== undefined && parsedAmount > balance
     ? `Budget exceeds your USDC balance (${formatUsdc(balance)})`
+    : spendableBalance !== undefined && parsedAmount > spendableBalance
+    ? `Insufficient USDC for gas fees (~${formatUsdc(gasReserve)} USDC needed)`
     : parsedDelegation === undefined || parsedDelegation > (parsedAmount ?? 0n)
     ? 'Delegation limit cannot exceed budget'
     : !deadlineTs || deadlineTs === 0n
@@ -521,12 +677,43 @@ export function CreateRoot({ onNavigate }: Props) {
     if (needsApproval) { handleApprove() } else { handleCreate() }
   }
 
-  /* Auto-advance: once approve succeeds and no create tx yet, run create.
-   * configOk is re-checked here in case verification status changed between
-   * the approve tx and the auto-advance callback. */
-  useSuccessOnce(approveSuccess && !createHash, approveHash, () => {
-    if (formValid && configOk) handleCreate()
-  })
+  // ── Auto-advance: approve → createRoot ───────────────────────────────────────
+  //
+  // Problem: useSuccessOnce fires synchronously in a useEffect alongside the
+  // refetchAllowance() call. The refetch is async, so at the moment auto-advance
+  // fired previously, `allowance` still held the pre-approval value and
+  // handleCreate's `allowance < parsedAmount` guard silently blocked it.
+  //
+  // Fix: watch [approveSuccess, approveHash, allowance, createHash] in a
+  // separate useEffect. It only runs when approveSuccess is true and a createRoot
+  // has not yet been submitted. It calls handleCreate() only when the fresh
+  // allowance confirms sufficiency (handleCreate re-checks internally). This
+  // naturally awaits the refetch resolution — React re-renders when allowance
+  // updates, triggering this effect again, and on the second (or later) render
+  // the allowance is fresh and handleCreate proceeds.
+  //
+  // A rejected wallet signature sets createErrored to true. This effect does NOT
+  // re-fire after a rejection because handleCreate only submits when createHash
+  // is undefined — once the user has rejected once, createErrored is true and
+  // createHash stays undefined, but handleCreate's createWrite would try again.
+  // Guard: only fire this effect when createErrored is false and createHash is
+  // undefined (i.e., first attempt only — no silent retry on rejection).
+  const autoAdvancedFor = useRef<`0x${string}` | undefined>(undefined)
+  useEffect(() => {
+    // Only fire for an approve → create sequence, not on initial render
+    if (!approveSuccess || !approveHash) return
+    // Only auto-advance once per approve hash
+    if (autoAdvancedFor.current === approveHash) return
+    // Don't auto-advance if a create was already submitted or errored
+    if (createHash !== undefined || createErrored) return
+    // Require fresh allowance (from refetch after approval confirmation)
+    if (!parsedAmount || allowance === undefined || allowance < parsedAmount) return
+    // All checks pass — mark fired and call handleCreate
+    autoAdvancedFor.current = approveHash
+    if (formValid) handleCreate()
+  // handleCreate is stable within a render; listing all deps it reads:
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [approveSuccess, approveHash, allowance, createHash, createErrored, parsedAmount, formValid])
 
   /* IDs for aria-describedby */
   const idTitle    = useId()
@@ -545,10 +732,16 @@ export function CreateRoot({ onNavigate }: Props) {
   /* Relative deadline label */
   const dlRel = deadlineTs && !isPast(deadlineTs) ? relativeDeadline(deadlineTs) : ''
 
-  /* Max budget shortcut */
+  /* Max budget shortcut
+   * Uses spendableBalance (balance minus conservative gas reserve) so the
+   * wallet retains enough USDC to pay for all transactions in the flow.
+   * Max is only shown when spendableBalance is known and positive — if fee
+   * estimation has not yet succeeded, Max is hidden. There is no fallback to
+   * raw balance: using the raw balance when fees are unknown risks leaving
+   * nothing for gas, which would cause the transaction to fail on-chain. */
   function setMax() {
-    if (balance !== undefined) {
-      setAmount(formatUsdc(balance, { digits: 6 }).replace(/,/g, ''))
+    if (spendableBalance !== undefined && spendableBalance > 0n) {
+      setAmount(formatUsdc(spendableBalance, { digits: 6 }).replace(/,/g, ''))
       touch('amount')
     }
   }
@@ -679,7 +872,13 @@ export function CreateRoot({ onNavigate }: Props) {
               {/* Budget input */}
               <Field
                 label="Total budget"
-                helper={balance !== undefined ? `Balance ${formatUsdc(balance)}` : undefined}
+                helper={
+                  spendableBalance !== undefined
+                    ? `Available ${formatUsdc(spendableBalance)} USDC (after gas)`
+                    : balance !== undefined
+                    ? `Balance ${formatUsdc(balance)} USDC`
+                    : undefined
+                }
                 error={errAmount}
                 inputId={idAmount}
               >
@@ -700,12 +899,30 @@ export function CreateRoot({ onNavigate }: Props) {
                     style={{ borderColor: errAmount ? 'var(--bad)' : undefined }}
                   />
                   <span className="cr-amount-unit">USDC</span>
-                  {balance !== undefined && (
+                  {/* Show Max only when spendableBalance is known (fees loaded) */}
+                  {spendableBalance !== undefined && spendableBalance > 0n && (
                     <button type="button" className="cr-max-btn" onClick={setMax}>Max</button>
                   )}
                 </div>
                 {balance === undefined && <Skeleton width={120} height={12} style={{ marginTop: 6 }} />}
               </Field>
+
+              {/* Gas estimation error — shown when fees are unavailable */}
+              {gasError && !gasLoading && (
+                <Notice kind="warn" style={{ marginTop: 8 }}>
+                  Could not estimate network fees.{' '}
+                  <button
+                    type="button"
+                    className="cr-use-wallet"
+                    onClick={() => void refetchGas()}
+                    style={{ display: 'inline', padding: 0, background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', textDecoration: 'underline', font: 'inherit' }}
+                    aria-label="Retry gas fee estimation"
+                  >
+                    Retry
+                  </button>
+                  {' '}to enable Max and gas-sufficiency checks.
+                </Notice>
+              )}
 
               {/* Delegation limit — slider + input */}
               <Field
@@ -773,6 +990,7 @@ export function CreateRoot({ onNavigate }: Props) {
               parsedDelegation={parsedDelegation}
               reservedBudget={reservedBudget}
               balance={balance}
+              spendableBalance={spendableBalance}
               manager={manager}
               deadlineTs={deadlineTs}
               deadlineInput={deadlineInput}

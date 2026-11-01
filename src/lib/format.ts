@@ -77,7 +77,8 @@ export function relativeDeadline(ts: bigint | number): string {
 export function parseOnchainError(err: unknown): string {
   const msg = (err as { message?: string })?.message?.toLowerCase() ?? ''
   if (msg.includes('user rejected') || msg.includes('user denied')) return 'Transaction cancelled.'
-  if (msg.includes('insufficient funds') || msg.includes('exceeds balance')) return 'Insufficient USDC balance.'
+  if (msg.includes('insufficient funds') || msg.includes('exceeds balance')) return 'Insufficient USDC for this transaction. Check your balance and gas costs.'
+  if (msg.includes('isblacklisted') || msg.includes('blacklisted') || msg.includes('blocklisted') || msg.includes('account is frozen')) return 'This address is restricted from USDC transfers.'
   if (msg.includes('delegationcapacityexceeded')) return 'Delegation limit reached.'
   if (msg.includes('reservedbudgetviolation')) return 'Would violate protected reserve.'
   if (msg.includes('deadlinepassed')) return 'Commitment deadline has passed.'

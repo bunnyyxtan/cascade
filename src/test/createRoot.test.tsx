@@ -38,6 +38,39 @@ vi.mock('wagmi', () => ({
     isSuccess: false,
     data:      undefined,
   }),
+  useEstimateFeesPerGas: () => ({
+    data:      { maxFeePerGas: 20_000_000_000n, maxPriorityFeePerGas: 1_000_000_000n },
+    isLoading: false,
+    isError:   false,
+    refetch:   vi.fn(),
+  }),
+  useEstimateGas: () => ({
+    data:      undefined,
+    isLoading: false,
+    isError:   false,
+  }),
+  useSwitchChain: () => ({ switchChain: vi.fn(), isPending: false }),
+}))
+
+vi.mock('@/hooks/useGasEstimate', () => ({
+  APPROVE_GAS_UNITS: 65_000n,
+  CREATE_GAS_UNITS:  150_000n,
+  SAFETY_MARGIN_PCT: 125n,
+  nativeGasCostToUsdc: (gasUnits: bigint, maxFeePerGas: bigint) => {
+    const nativeWei = gasUnits * maxFeePerGas
+    return (nativeWei + 10n ** 12n - 1n) / 10n ** 12n
+  },
+  applyGasMargin: (units: bigint) => (units * 125n + 99n) / 100n,
+  useGasEstimate: () => ({
+    maxFeePerGas:  20_000_000_000n,
+    twoTxReserve:  4_300n,
+    oneTxReserve:  3_000n,
+    isLoading:     false,
+    isError:       false,
+    refetch:       vi.fn(),
+  }),
+  useEstimateApproveGas: () => ({ gasUnits: undefined, isLoading: false, isError: false }),
+  useEstimateCreateGas:  () => ({ gasUnits: undefined, isLoading: false, isError: false }),
 }))
 
 vi.mock('connectkit', () => ({

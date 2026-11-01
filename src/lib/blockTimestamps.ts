@@ -15,9 +15,8 @@
  *   - Fully independent of history.ts; shares the same RPC URL.
  */
 
-import { createPublicClient, http } from 'viem'
 import { useSyncExternalStore, useEffect } from 'react'
-import { CHAIN, CHAIN_ID, RPC_URL } from './network'
+import { CHAIN_ID, getPublicClient } from './network'
 import { CASCADE_ADDRESS } from './contracts'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -55,9 +54,7 @@ const _fetching   = new Set<bigint>()
 
 function notify() { _listeners.forEach(l => l()) }
 
-function getClient() {
-  return createPublicClient({ chain: CHAIN, transport: http(RPC_URL) })
-}
+const getClient = getPublicClient
 
 async function fetchBatch(blocks: bigint[]) {
   const client = getClient()

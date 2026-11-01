@@ -14,11 +14,11 @@
  * - Guards against overlapping sync runs (_syncing flag).
  */
 
-import { createPublicClient, http, parseEventLogs } from 'viem'
+import { parseEventLogs } from 'viem'
 import { useSyncExternalStore, useEffect } from 'react'
 import { cascadeAbi } from './cascadeAbi'
 import { CASCADE_ADDRESS } from './contracts'
-import { CHAIN, CHAIN_ID as NET_CHAIN_ID, RPC_URL } from './network'
+import { CHAIN_ID as NET_CHAIN_ID, NETWORK_LABEL, getPublicClient } from './network'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -38,11 +38,10 @@ export interface HistoryState {
   error: string | null
 }
 
-// ── RPC client ────────────────────────────────────────────────────────────────
-
-function getClient() {
-  return createPublicClient({ chain: CHAIN, transport: http(RPC_URL) })
-}
+// ── RPC client — delegates to the shared singleton in network.ts ─────────────
+// All standalone reads use getPublicClient() so transport selection
+// (Vercel proxy / Studio proxy / public RPC) is determined in one place.
+const getClient = getPublicClient
 
 // ── Type-safe string coercion for decoded event args ─────────────────────────
 type Primitive = string | number | bigint | boolean | null | undefined
@@ -202,7 +201,8 @@ let _state: HistoryState = {
 const listeners = new Set<() => void>()
 let _refetchCallbacks: Array<() => void> = []
 let _pollTimer: ReturnType<typeof setTimeout> | null = null
-let _syncing = false
+let _syncing     = false
+let _pendingForce = false   // set when a forced sync arrives during an active sync
 
 function notify() {
   listeners.forEach(l => l())
@@ -274,8 +274,16 @@ async function syncFrom(fromBlock: bigint, head: bigint): Promise<void> {
 
 export async function syncHistory(force = false): Promise<void> {
   if (!CASCADE_ADDRESS) return
-  if (_syncing && !force) return
-  _syncing = true
+
+  // Concurrency guard: never run two syncs in parallel.
+  // A forced sync arriving mid-run sets _pendingForce so it re-runs once the
+  // current sync finishes — without overlapping or corrupting the checkpoint.
+  if (_syncing) {
+    if (force) _pendingForce = true
+    return
+  }
+  _syncing     = true
+  _pendingForce = false
 
   try {
     const client = getClient()
@@ -288,7 +296,6 @@ export async function syncHistory(force = false): Promise<void> {
     const fromBlock = _state.syncedTo > 0n ? _state.syncedTo + 1n : deployBlock
 
     if (fromBlock > head) {
-      // Already up to date
       setState({ syncing: false, progress: 1 })
       return
     }
@@ -296,22 +303,29 @@ export async function syncHistory(force = false): Promise<void> {
     setState({ syncing: true, error: null })
     await syncFrom(fromBlock, head)
   } catch (e) {
-    // Extract a clean human-readable message — never dump raw RPC JSON
-    let msg = 'Arc Testnet is temporarily unavailable. Please retry shortly.'
+    // Surface a clean, actionable message. Never dump raw RPC JSON.
+    let msg = `${NETWORK_LABEL} is temporarily unavailable. Please retry shortly.`
     if (e instanceof Error) {
-      const raw = e.message
-      // Rate-limit specific message
-      if (raw.toLowerCase().includes('429') || raw.toLowerCase().includes('rate') || raw.toLowerCase().includes('too many')) {
-        msg = 'Arc Testnet is busy right now. Please wait a moment and retry.'
-      } else if (raw.length < 200) {
-        // Only use the raw message if it is short enough to be readable
-        msg = raw
+      const raw = e.message.toLowerCase()
+      if (raw.includes('429') || raw.includes('rate') || raw.includes('too many')) {
+        msg = `${NETWORK_LABEL} is busy right now. Please wait a moment and retry.`
+      } else if (raw.includes('blocked') || raw.includes('err_blocked')) {
+        msg = 'RPC request blocked by the browser. Check your ad-blocker settings or use the app on a supported browser.'
+      } else if (e.message.length < 200) {
+        msg = e.message
       }
     }
     setState({ syncing: false, error: msg })
   } finally {
     _syncing = false
-    schedulePoll()
+    // If a forced sync was requested while we were running, re-run now that
+    // we have released the lock — but only once (prevents infinite loop).
+    if (_pendingForce) {
+      _pendingForce = false
+      void syncHistory(true)
+    } else {
+      schedulePoll()
+    }
   }
 }
 

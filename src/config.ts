@@ -3,16 +3,18 @@
  * Built with Arc Studio — https://studio.arc.io
  */
 
-import { http, createConfig } from 'wagmi'
+import { createConfig, http } from 'wagmi'
 import { mainnet } from 'wagmi/chains'
 import { injected } from 'wagmi/connectors'
-import { CHAIN, RPC_URL } from './lib/network'
+import { CHAIN, makeTransport } from './lib/network'
 
 export const config = createConfig({
-  chains: [CHAIN, mainnet], // mainnet needed for ENS resolution
+  chains: [CHAIN, mainnet], // mainnet kept for ENS resolution
   connectors: [injected()],
   transports: {
-    [CHAIN.id]: http(RPC_URL),
-    [mainnet.id]: http(), // ENS resolution uses mainnet
+    // All Arc reads go through the centralized transport (proxy-aware).
+    [CHAIN.id]: makeTransport(),
+    // ENS resolution uses Ethereum mainnet; not proxied (not blocked in practice).
+    [mainnet.id]: http(),
   },
 })

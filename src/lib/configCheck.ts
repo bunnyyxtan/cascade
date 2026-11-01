@@ -17,9 +17,9 @@
  * Writes are allowed only when status === 'ok' AND key matches the current key.
  */
 
-import { createPublicClient, http, keccak256 } from 'viem'
+import { keccak256 } from 'viem'
 import { useSyncExternalStore, useEffect } from 'react'
-import { CHAIN, CHAIN_ID, RPC_URL } from './network'
+import { CHAIN_ID, getPublicClient } from './network'
 import { CASCADE_ADDRESS, USDC_ADDRESS, isDeployed } from './contracts'
 import { cascadeAbi } from './cascadeAbi'
 
@@ -95,7 +95,7 @@ export async function runConfigCheck(): Promise<void> {
       return
     }
 
-    const client = createPublicClient({ chain: CHAIN, transport: http(RPC_URL) })
+    const client = getPublicClient()
     const addr = CASCADE_ADDRESS
 
     // Check 1: eth_chainId — verify we're talking to the right network
