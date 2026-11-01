@@ -51,7 +51,7 @@ Client funds a root commitment
 
 USDC (Arc mainnet and testnet): `0x3600000000000000000000000000000000000000` · 6 decimals (ERC-20 view)
 
-Both deployments use the same compiled bytecode (runtime codehash `0xdae313ed3e636b9ee2cc0067af1a501ad8128e031a2d23b5f2d5e78ae1cd8e29`).
+Both deployments use the same compiled bytecode (runtime codehash `0xdae313ed3e636b9ee2cc0067af1a501ad8128e031a2d23b5f2d5e78ae1cd8e29`)
 
 ## Architecture
 
